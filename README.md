@@ -27,9 +27,7 @@ conda env create -f workflow/envs/snakemake.yaml
 
 ### config
 
-For this whole-exome sequencing data analysis pipeline, you must provide 3 files in the `config` folder, namely
-
-* `imeta_output.tsv`. The output of IRODS imeta output for the project you are analyzing.
+For this whole-exome sequencing data analysis pipeline, you must provide 2 files in the `config` folder, namely
 
 * `samples.tsv`. This file must contain the following columns
   + `Sample_Id` identifier, unique for each row. Clean id.

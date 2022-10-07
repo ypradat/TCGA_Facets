@@ -1,0 +1,63 @@
+# @created: 01 Dec 21
+# @modified: 06 Oct 22
+# @uthor: Yoann Pradat
+#
+# This pipeline runs FACETS and downstream tools for analysing SCNAs in exome-sequencing data from TCGA. 
+
+include: "rules/common.smk"
+
+##### Target rules #####
+
+rule all:
+    input:
+        # +++++++++++++++++++++++
+        #### MAPPING
+        # +++++++++++++++++++++++
+        # expand("%s/mapping/{sample}.bam" % R_FOLDER, sample=samples),
+        # expand("%s/mapping/{sample}.bai" % R_FOLDER, sample=samples),
+        # +++++++++++++++++++++++
+        # ## SOMATIC CNV
+        # +++++++++++++++++++++++
+        expand("%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.vcf.gz" % R_FOLDER,
+               get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
+        expand("%s/calling/somatic_cnv_table/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER,
+                  get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
+        expand("%s/calling/somatic_cnv_bed/{tsample}_vs_{nsample}.bed.gz" % R_FOLDER,
+                  get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
+        expand("%s/calling/somatic_cnv_calls/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER,
+               get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
+        expand("%s/calling/somatic_cnv_chr_arm/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
+               get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
+        expand("%s/calling/somatic_cnv_sum/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
+               get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
+        expand("%s/annotation/somatic_cna_oncokb_filter/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
+               get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
+        expand("%s/annotation/somatic_cna_civic_filter/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
+               get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
+        # +++++++++++++++++++++++
+        #### AGGREGATE
+        # # +++++++++++++++++++++++
+        # "%s/aggregate/somatic_cna/somatic_calls_filters.tsv.gz" % R_FOLDER,
+        # "%s/aggregate/somatic_cna/somatic_calls.tsv.gz" % R_FOLDER,
+        # "%s/aggregate/somatic_cna/somatic_calls_oncokb.tsv.gz" % R_FOLDER,
+        # "%s/aggregate/somatic_cna/somatic_calls_civic.tsv.gz" % R_FOLDER,
+        # "%s/aggregate/somatic_cna/somatic_calls_union_ann.tsv.gz" % R_FOLDER,
+        # "%s/aggregate/somatic_cna/somatic_calls_summary_statistics.tsv.gz" % R_FOLDER,
+        # "%s/aggregate/somatic_cna/somatic_calls_per_chr_arm.tsv.gz" % R_FOLDER
+
+
+##### Modules #####
+
+include: "rules/setup.smk"
+# include: "rules/external_resources.smk"
+include: "rules/calling.smk"
+include: "rules/annotation.smk"
+# include: "rules/aggregate.smk"
+
+##### End messages #####
+
+onsuccess:
+    print("Workflow finished, no error")
+
+onerror:
+    print("An error occurred")

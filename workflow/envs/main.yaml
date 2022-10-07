@@ -1,0 +1,17 @@
+name: main
+channels:
+    - bioconda
+    - conda-forge
+    - defaults
+    - r
+    - https://repo.anaconda.com/pkgs/free
+dependencies:
+    - r-argparse=2.0.3
+    - r-base=3.6.3
+    - r-data.table=1.13.6
+    - bedtools=2.30.0
+    - bcftools=1.9
+    - cnv_facets=0.16.0
+    - htslib=1.9
+    - samtools=1.9
+    - snp-pileup=0.5.14

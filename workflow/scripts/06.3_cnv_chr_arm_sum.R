@@ -103,6 +103,7 @@ extract_genome_sizes <- function(header){
   chroms <- unlist(lapply(contigs, function(contig) gsub(",.*$", "", gsub("##contig=<ID=", "", contig))))
   sizes <- unlist(lapply(contigs, function(contig) gsub(">$", "", gsub("^.*length=", "", contig))))
   genome <- data.frame(chrom=chroms, size=sizes)
+  genome <- genome %>% mutate(chrom=gsub("^chr", "", chrom))
 
   genome$size <- as.numeric(genome$size)
   mask_char <- genome$chrom %in% as.character(1:22)
@@ -353,6 +354,9 @@ main <- function(args){
   dipLogR <- extract_from_header(vcf_header, "dipLogR")
   est_insert_size <- extract_from_header(vcf_header, "est_insert_size")
 
+  # remove prefix if any
+  df_cnv_tab <- df_cnv_tab %>% mutate(chrom=gsub("^chr", "", chrom))
+
   # undo renaming by cnv_facets to have only numeric chromosome names
   df_cnv_tab[df_cnv_tab$chrom == 'X', "chrom"] <- "23"
   df_cnv_tab[df_cnv_tab$chrom == 'Y', "chrom"] <- "24"
@@ -445,7 +449,7 @@ if (getOption('run.main', default=TRUE)) {
   parser <- ArgumentParser(description='Call chromosome arm copy-number changes.')
   parser$add_argument("--input_tab", type="character", help="Path to table parsed from vcf of cnv_facets.")
   parser$add_argument("--input_vcf", type="character", help="Path to VCF from cnv_facets.")
-  parser$add_argument("--genome", type="character", help="Genome build.", default="hg19")
+  parser$add_argument("--genome", type="character", help="Genome build.", default="hg38")
   parser$add_argument("--output_arm", type="character", help="Path to output table of chromosome arm CNVs.")
   parser$add_argument("--output_sum", type="character", help="Path to output table CNV summary statistics.")
   parser$add_argument('--log', type="character", help='Path to log file.')

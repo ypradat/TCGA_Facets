@@ -38,8 +38,8 @@ rule somatic_cnv_facets_tumor_normal:
     threads: 10
     resources:
         queue="shortq",
-        mem_mb=48000,
-        time_min=120
+        mem_mb=64000,
+        time_min=90
     shell:
         """
         cnv_facets.R \

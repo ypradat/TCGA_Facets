@@ -26,5 +26,5 @@ gs_bai_file=${gs_bucket}/${sample}.bai
 local_bam_file=${local_dir}/${sample}.bam
 local_bai_file=${local_dir}/${sample}.bai
 
-gsutil cp ${bam_file} ${local_bam_file}
-gsutil cp ${bai_file} ${local_bai_file}
+gsutil cp ${gs_bam_file} ${local_bam_file}
+gsutil cp ${gs_bai_file} ${local_bai_file}

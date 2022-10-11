@@ -1,4 +1,6 @@
 rule setup_r:
+    log:
+        "%s/setup.log" % L_FOLDER
     conda:
         "../envs/r.yaml"
     output:
@@ -9,6 +11,6 @@ rule setup_r:
         time_min=60
     shell:
         """
-        Rscript -e 'devtools::install_github("mskcc/facets-suite")'
+        Rscript -e 'devtools::install_github("mskcc/facets-suite")' &> {log}
         """
 

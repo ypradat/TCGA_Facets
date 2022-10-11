@@ -18,7 +18,7 @@ rule download_bam:
         bai="%s/mapping/{sample}.bai" % R_FOLDER,
     resources:
         mem_mb=1000,
-        time_min=10
+        time_min=120
     threads: 2
     shell:
         """

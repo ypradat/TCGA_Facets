@@ -50,8 +50,8 @@ def main(args):
     df_sam = df_sam.dropna(how="any")
 
     # extract File_Name and Index_File_Name
-    df_sam["File_Name"] = df_sam["File_Name_Key"].apply(lambda x: x.split("/")[-1])[0]
-    df_sam["Index_File_Name"] = df_sam["Index_File_Name_Key"].apply(lambda x: x.split("/")[-1])[0]
+    df_sam["File_Name"] = df_sam["File_Name_Key"].apply(lambda x: x.split("/")[-1])
+    df_sam["Index_File_Name"] = df_sam["Index_File_Name_Key"].apply(lambda x: x.split("/")[-1])
     df_sam["File_Size"] = df_sam["File_Size"].astype(int)
     df_sam["Index_File_Size"] = df_sam["Index_File_Size"].astype(int)
 

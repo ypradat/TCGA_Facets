@@ -13,9 +13,9 @@ rule somatic_cnv_facets_tumor_normal:
     input:
         vcf=config["params"]["gatk"]["known_sites"],
         tbam="%s/mapping/{tsample}.bam" % R_FOLDER,
-        tbai="%s/mapping/{tsample}.bam.bai" % R_FOLDER,
+        tbai="%s/mapping/{tsample}.bai" % R_FOLDER,
         nbam="%s/mapping/{nsample}.bam" % R_FOLDER,
-        nbai="%s/mapping/{nsample}.bam.bai" % R_FOLDER
+        nbai="%s/mapping/{nsample}.bai" % R_FOLDER
     output:
         vcf="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.vcf.gz" % R_FOLDER,
         tbi="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.vcf.gz.tbi" % R_FOLDER,

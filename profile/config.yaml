@@ -7,5 +7,6 @@ reason: true
 printshellcmds: true
 conda-prefix: .snakemake/conda
 singularity-prefix: .snakemake/singularity
+rerun-triggers: mtime
 use-conda: true
 use-singularity: true

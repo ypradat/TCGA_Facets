@@ -11,24 +11,19 @@ rule download_bam:
     input:
         table = config["samples"]
     params:
-        dir = "%s/mapping" % R_FOLDER,
-        bam_name=lambda w: "%s/mapping/%s" % (R_FOLDER, get_column_table_sample(w, "File_Name")),
-        bam_name_key=lambda w: "%s/mapping/%s" % (R_FOLDER, get_column_table_sample(w, "File_Name_Key")),
-        index_bam_name=lambda w: "%s/mapping/%s" % (R_FOLDER, get_column_table_sample(w, "Index_File_Name")),
-        index_bam_name_key=lambda w: "%s/mapping/%s" % (R_FOLDER, get_column_table_sample(w, "Index_File_Name_Key"))
+        gs_bucket = "gs://tcga_wxs_bam",
+        local_dir = "%s/mapping" % R_FOLDER,
     output:
         bam="%s/mapping/{sample}.bam" % R_FOLDER,
         bai="%s/mapping/{sample}.bai" % R_FOLDER,
     resources:
         mem_mb=1000,
         time_min=10
-    threads: 4
+    threads: 2
     shell:
         """
         bash workflow/scripts/01.1_get_bam.sh \
-            -d {params.dir} \
-            -a {params.bam_name} \
-            -b {params.bam_name_key} \
-            -c {params.index_bam_name} \
-            -d {params.index_bam_name_key} &> {log}
+            -b {params.gs_bucket} \
+            -d {params.local_dir} \
+            -s {wildcards.sample} &> {log}
         """

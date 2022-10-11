@@ -1,4 +1,4 @@
-name: wes_metaprism_snakemake
+name: snakemake
 channels:
   - defaults
   - bioconda
@@ -6,4 +6,4 @@ channels:
 dependencies:
   - snakemake=6.15.5
   - pandas=1.3.5
-  - mamba=0.21.1
+  - mamba

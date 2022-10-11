@@ -1,0 +1,11 @@
+restart-times: 0
+max-jobs-per-second: 1
+max-status-checks-per-second: 10
+jobs: 10
+keep-going: true
+reason: true
+printshellcmds: true
+conda-prefix: .snakemake/conda
+singularity-prefix: .snakemake/singularity
+use-conda: true
+use-singularity: true

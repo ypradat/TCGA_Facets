@@ -41,7 +41,7 @@ def main(args):
                         folder_vm = os.path.join(supfolder_vm, midfolder, subfolder)
                         folder_gs = os.path.join(supfolder_gs, midfolder, subfolder)
                         if os.path.exists(folder_vm):
-                            files_vm = os.path.listdir(folder_vm)
+                            files_vm = os.listdir(folder_vm)
                             filepaths_vm = [os.path.join(folder_vm, file_vm) for file_vm in files_vm]
                             filepaths_gs = [os.path.join(folder_gs, file_vm) for file_vm in files_vm]
                             for filepath_vm, filepath_gs in zip(filepaths_vm, filepaths_gs):

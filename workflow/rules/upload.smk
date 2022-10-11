@@ -20,11 +20,11 @@ rule upload_results:
     output:
         touch("%s/upload.done" % L_FOLDER)
     log:
-        "%s/mapping/upload_results.log" % L_FOLDER
+        "%s/upload/upload_results.log" % L_FOLDER
     conda:
         "../envs/python.yaml"
     benchmark:
-        "%s/mapping/upload_results.tsv" % B_FOLDER
+        "%s/upload/upload_results.tsv" % B_FOLDER
     resources:
         mem_mb=1000,
         time_min=30

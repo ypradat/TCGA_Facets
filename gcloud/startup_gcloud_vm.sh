@@ -42,7 +42,6 @@ EOF
 
 cat <<'EOF'>>.condarc
 auto_activate_base: false
-channel_priority: strict
 EOF
 
 source .bashrc

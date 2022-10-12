@@ -55,21 +55,71 @@ def main(args):
     df_sam["File_Size"] = df_sam["File_Size"].astype(int)
     df_sam["Index_File_Size"] = df_sam["Index_File_Size"].astype(int)
 
-    # save table of samples
-    df_sam.to_csv(args.out_sam, index=False, sep="\t")
-
     # prepare table of tumor/normal pairs
     cols_attributes = [x for x in cols if x not in cols_ids + ["Sample_Type", "Biopsy_Type"]]
-    df_sam_dna_n = df_sam.loc[df_sam["Sample_Type"]=="DNA_N"][cols_attributes + ["Sample_Id"]]
-    df_sam_dna_n = df_sam_dna_n.rename(columns={"Sample_Id": "DNA_N"})
+    df_sam_dna_n = df_sam.loc[df_sam["Sample_Type"]=="DNA_N"][cols_attributes + ["Sample_Id", "File_Size"]]
+    df_sam_dna_n = df_sam_dna_n.rename(columns={"Sample_Id": "DNA_N", "File_Size": "File_Size_N"})
 
-    df_sam_dna_t = df_sam.loc[df_sam["Sample_Type"]=="DNA_T"][cols_attributes + ["Sample_Id"]]
-    df_sam_dna_t = df_sam_dna_t.rename(columns={"Sample_Id": "DNA_T"})
+    df_sam_dna_t = df_sam.loc[df_sam["Sample_Type"]=="DNA_T"][cols_attributes + ["Sample_Id", "File_Size"]]
+    df_sam_dna_t = df_sam_dna_t.rename(columns={"Sample_Id": "DNA_T", "File_Size": "File_Size_T"})
     df_tnp = df_sam_dna_t.merge(df_sam_dna_n, how="outer", on=cols_attributes)
 
     # drop samples with missing values
-    df_tnp = df_tnp.dropna(how="any")
+    df_tnp = df_tnp.dropna(how="any").copy()
     df_tnp["DNA_P"] = df_tnp[["DNA_T", "DNA_N"]].apply("_vs_".join, axis=1)
+    df_tnp["File_Size_P"] = (df_tnp["File_Size_T"] + df_tnp["File_Size_N"])/1024**3
+
+    # sort so that batch indices do not change from one run to another
+    df_tnp = df_tnp.sort_values(by="DNA_P")
+
+    # subsect to consider only pairs selected by MC3 consortium
+    df_mc3 = pd.read_table(args.mc3_tnp)
+    df_mc3["DNA_P"] = df_mc3[["Tumor_Sample_Barcode", "Matched_Norm_Sample_Barcode"]].apply("_vs_".join, axis=1)
+
+    # create batches
+    # some pairs were already processed during tests
+    dna_p_batch_1 = ["TCGA-05-4244-01A-01D-1105-08_vs_TCGA-05-4244-10A-01D-1105-08",
+                     "TCGA-05-4415-01A-22D-1855-08_vs_TCGA-05-4415-10A-01D-1855-08",
+                     "TCGA-02-0003-01A-01D-1490-08_vs_TCGA-02-0003-10A-01D-1490-08",
+                     "TCGA-YB-A89D-01A-12D-A36O-08_vs_TCGA-YB-A89D-10A-01D-A367-08"]
+    df_tnp_a = df_tnp.loc[df_tnp["DNA_P"].isin(dna_p_batch_1)].copy()
+    df_tnp_a["Batch"] = 1
+
+    # create batches iteratively
+    df_tnp_b = df_tnp.loc[~df_tnp["DNA_P"].isin(dna_p_batch_1)].copy()
+    df_tnp_b["Batch"] = np.nan
+
+    i_batch = 2
+    cum_file_size = 0
+    cum_batch_size = 0
+    r_tnp_batches = []
+    for i_tnp, r_tnp in df_tnp_b.iterrows():
+        cum_file_size += r_tnp["File_Size_P"]
+        cum_batch_size += 1
+        if cum_file_size > args.max_disk_size or cum_batch_size > args.max_batch_size:
+            cum_file_size = r_tnp["File_Size_P"]
+            cum_batch_size = 1
+            i_batch += 1
+        r_tnp_batch = r_tnp.copy().to_dict()
+        r_tnp_batch["Batch"] = i_batch
+        r_tnp_batches.append(r_tnp_batch)
+
+    df_tnp_b = pd.DataFrame(r_tnp_batches)
+
+    # merge
+    df_tnp = pd.concat((df_tnp_a, df_tnp_b), axis=0)
+
+    # subselect sam table to consider only samples with matched normal
+    df_sam = df_sam.loc[df_sam["Sample_Id"].isin(df_tnp["DNA_T"].tolist()+df_tnp["DNA_N"].tolist())]
+
+    # # add batch index to sam table
+    # df_tnp_batch_t = df_tnp[["DNA_T", "Batch"]].rename(columns={"DNA_T": "Sample_Id"})
+    # df_tnp_batch_n = df_tnp[["DNA_N", "Batch"]].rename(columns={"DNA_N": "Sample_Id"})
+    # df_tnp_batch = pd.concat((df_tnp_batch_t, df_tnp_batch_n)).drop_duplicates()
+    # df_sam = df_sam.merge(df_tnp_batch, how="left", on="Sample_Id")
+
+    # save table of samples
+    df_sam.to_csv(args.out_sam, index=False, sep="\t")
 
     # save table of samples
     df_tnp.to_csv(args.out_tnp, index=False, sep="\t")
@@ -77,9 +127,15 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Prepare samples table.")
+    parser.add_argument("--mc3_tnp", type=str, help="Path to table of MC3-analyzed tumor/normal pairs.",
+                        default="../../data/tcga/wes/summary/mc3_unfiltered_analyzed.tsv")
     parser.add_argument("--out_sam", type=str, help="Path to table of samples.", default="config/samples.tsv")
     parser.add_argument("--out_tnp", type=str, help="Path to table of tumor/normal pairs.",
                         default="config/tumor_normal_pairs.tsv")
+    parser.add_argument("--max_disk_size", type=int, help="Max disk size available for one batch.",
+                        default=190)
+    parser.add_argument("--max_batch_size", type=int, help="Max number of tumor/normal pairs for one batch.",
+                        default=4)
     args = parser.parse_args()
 
     main(args)

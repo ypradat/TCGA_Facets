@@ -27,7 +27,7 @@ def main(args):
     df_sam = pd.read_table(args.samples_table)
 
     # check that samples requested are in the table
-    samples = df_sam.loc[df_sam["Batch"]==args.batch_index]
+    samples = df_sam.loc[df_sam["Batch"]==args.batch_index, "Sample_Id"].drop_duplicates().tolist()
     if len(samples)==0:
         print("-WARNING: batch %d not found in the table %s:" % (args.batch_index, args.samples_table))
 

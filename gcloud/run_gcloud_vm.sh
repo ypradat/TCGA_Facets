@@ -2,7 +2,7 @@
 
 while getopts ":b:" opt; do
     case $opt in
-	i) batch_index="$OPTARG"
+	b) batch_index="$OPTARG"
 	    ;;
 	\?) echo "Invalid option -$OPTARG" >&2
 	    exit 1
@@ -16,11 +16,11 @@ while getopts ":b:" opt; do
     esac
 done
 
-# Populate the bucket tcga_wxs_bam
-python -u workflow/scripts/populate_bam_gs_bucket.py \
-   --samples_table config/samples.tsv \ 
-   --bucket_gs_uri "gs://tcga_wxs_bam" \ 
-   --batch_index ${batch_index}
+# # Populate the bucket tcga_wxs_bam
+# python -u gcloud/populate_bam_gs_bucket.py \
+#    --samples_table "config/samples.all.tsv" \
+#    --bucket_gs_uri "gs://tcga_wxs_bam" \
+#    --batch_index ${batch_index}
 
 # Extract disk size required for instance, considering a 20gb margin on top of the
 # BAM file sizes.
@@ -49,14 +49,14 @@ gcloud compute instances create facets-tcga-${batch_index} \
     --metadata-from-file=startup-script=./gcloud/startup_gcloud_vm.sh \
     --metadata=batch_index=${batch_index}
 
-# Delete instance
-gcloud compute instances delete facets-tcga-${batch_index} \
-    --zone=us-central1-a \
-    --delete-disks=all \
-    --quiet
-
-# Clean the bucket tcga_wxs_bam
-python -u workflow/scripts/depopulate_bam_gs_bucket.py \
-   --samples_table config/samples.tsv \ 
-   --bucket_gs_uri "gs://tcga_wxs_bam" \ 
-   --batch_index ${batch_index}
+# # Delete instance
+# gcloud compute instances delete facets-tcga-${batch_index} \
+#     --zone=us-central1-a \
+#     --delete-disks=all \
+#     --quiet
+# 
+# # Clean the bucket tcga_wxs_bam
+# python -u gcloud/depopulate_bam_gs_bucket.py \
+#    --samples_table config/samples.all.tsv \
+#    --bucket_gs_uri "gs://tcga_wxs_bam" \
+#    --batch_index ${batch_index}

@@ -162,9 +162,9 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Prepare samples table.")
-    parser.add_argument("--out_sam", type=str, help="Path to table of samples.", default="config/samples.tsv")
+    parser.add_argument("--out_sam", type=str, help="Path to table of samples.", default="config/samples.all.tsv")
     parser.add_argument("--out_tnp", type=str, help="Path to table of tumor/normal pairs.",
-                        default="config/tumor_normal_pairs.tsv")
+                        default="config/tumor_normal_pairs.all.tsv")
     parser.add_argument("--max_batch_size", type=int, help="Max number of tumor/normal pairs for one batch.",
                         default=4)
     args = parser.parse_args()

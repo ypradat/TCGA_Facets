@@ -16,11 +16,11 @@ while getopts ":b:" opt; do
     esac
 done
 
-# # Populate the bucket tcga_wxs_bam
-# python -u gcloud/populate_bam_gs_bucket.py \
-#    --samples_table "config/samples.all.tsv" \
-#    --bucket_gs_uri "gs://tcga_wxs_bam" \
-#    --batch_index ${batch_index}
+# Populate the bucket tcga_wxs_bam
+python -u gcloud/populate_bam_gs_bucket.py \
+   --samples_table "config/samples.all.tsv" \
+   --bucket_gs_uri "gs://tcga_wxs_bam" \
+   --batch_index ${batch_index}
 
 # Extract disk size required for instance, considering a 20gb margin on top of the
 # BAM file sizes.
@@ -54,9 +54,9 @@ gcloud compute instances create facets-tcga-${batch_index} \
 #     --zone=us-central1-a \
 #     --delete-disks=all \
 #     --quiet
-# 
-# # Clean the bucket tcga_wxs_bam
-# python -u gcloud/depopulate_bam_gs_bucket.py \
-#    --samples_table config/samples.all.tsv \
-#    --bucket_gs_uri "gs://tcga_wxs_bam" \
-#    --batch_index ${batch_index}
+ 
+# Clean the bucket tcga_wxs_bam
+python -u gcloud/depopulate_bam_gs_bucket.py \
+   --samples_table config/samples.all.tsv \
+   --bucket_gs_uri "gs://tcga_wxs_bam" \
+   --batch_index ${batch_index}

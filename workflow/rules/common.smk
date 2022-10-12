@@ -81,14 +81,14 @@ def get_input_concatenate(w, typ, db):
 def get_load_facets(wildcards):
     df_tnp = pd.read_table(config["tumor_normal_pairs"])
     dna_p = "%s_vs_%s" % (wildcards.tsample, wildcards.nsample)
-    size_dna_p = df_tnp.loc[df_tnp["DNA_P"]==dna_p, "File_Size_P"].iloc(0)
+    size_dna_p = df_tnp.loc[df_tnp["DNA_P"]==dna_p, "File_Size_P"].iloc[0]
 
     # assume a total available load of 100
     # assume a pair file size below 50 gb will consume less than 16 gb RAM, allow to run 4 pairs in parallel
     # assume a pair file size below 100gb should run alone
     if size_dna_p >= 100:
         load = 100
-    elif size_dna_p >= 50
+    elif size_dna_p >= 50:
         load = 50
     else:
         load = 25

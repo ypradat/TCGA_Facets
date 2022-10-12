@@ -76,3 +76,34 @@ def get_input_concatenate(w, typ, db):
         return ["%s/%s.maf" % (input_folder, sample_pair) for sample_pair in sample_pairs]
     elif typ=="cna":
         return ["%s/%s.tsv" % (input_folder, sample_pair) for sample_pair in sample_pairs]
+
+
+def get_load_facets(wildcards):
+    df_tnp = pd.read_table(config["tumor_normal_pairs"])
+    dna_p = "%s_vs_%s" % (wildcards.tsample, wildcards.nsample)
+    size_dna_p = df_tnp.loc[df_tnp["DNA_P"]==dna_p, "File_Size_P"].iloc(0)
+
+    # assume a total available load of 100
+    # assume a pair file size below 50 gb will consume less than 16 gb RAM, allow to run 4 pairs in parallel
+    # assume a pair file size below 100gb should run alone
+    if size_dna_p >= 100:
+        load = 100
+    elif size_dna_p >= 50
+        load = 50
+    else:
+        load = 25
+
+    return load
+
+
+def get_threads_facets(wildcards):
+    load = get_load_facets(wildcards)
+
+    if load==100:
+        threads = 16
+    elif load==50:
+        threads = 8
+    else:
+        threads = 4
+
+    return threads

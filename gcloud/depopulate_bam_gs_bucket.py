@@ -27,15 +27,13 @@ def main(args):
     df_sam = pd.read_table(args.samples_table)
 
     # check that samples requested are in the table
-    samples = args.samples
-    samples_missing = list(set(samples).difference(set(df_sam["Sample_Id"])))
-    if len(samples_missing)>0:
-        print("-WARNING: the following samples are missing from the table %s:" % args.samples_table)
-        print("\t" + "\n\t".join(samples_missing))
-    samples_found = [x for x in samples if x not in samples_missing]
+    samples = df_sam.loc[df_sam["Batch"]==args.batch_index]
+    if len(samples)==0:
+        print("-WARNING: batch %d not found in the table %s:" % (args.batch_index, args.samples_table))
+
 
     # copy to bucket and rename
-    for sample in samples_found:
+    for sample in samples:
         # get bam uris
         bam_name = "%s.bam" % sample
         bai_name = "%s.bai" % sample
@@ -54,13 +52,11 @@ def main(args):
 # run ==================================================================================================================
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Add Tumor_Sample and Normal_Sample fields.")
-    parser.add_argument('--samples_table', type=str, help='Path to input table.', default="config/samples.tsv")
+    parser = argparse.ArgumentParser(description="Remove all BAM files from selected batch from gcloud bucket.")
+    parser.add_argument('--samples_table', type=str, help='Path to input table.', default="config/samples.all.tsv")
     parser.add_argument('--bucket_gs_uri', type=str, help='Google cloud storage URI to bucket.',
                         default="gs://tcga_wxs_bam")
-    parser.add_argument('--samples', type=str, nargs="+", help='Samples to be added to the bucket.',
-                        default=["TCGA-05-4244-01A-01D-1105-08", "TCGA-05-4244-10A-01D-1105-08",
-                                 "TCGA-05-4415-01A-22D-1855-08", "TCGA-05-4415-10A-01D-1855-08"])
+    parser.add_argument('--batch_index', type=int, help='Index of the batch.')
     args = parser.parse_args()
 
     for arg in vars(args):

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @created: Oct 11 2022
-@modified: Oct 11 2022
+@modified: Oct 12 2022
 @author: Yoann Pradat
 
     CentraleSupelec
@@ -27,15 +27,12 @@ def main(args):
     df_sam = pd.read_table(args.samples_table)
 
     # check that samples requested are in the table
-    samples = args.samples
-    samples_missing = list(set(samples).difference(set(df_sam["Sample_Id"])))
-    if len(samples_missing)>0:
-        print("-WARNING: the following samples are missing from the table %s:" % args.samples_table)
-        print("\t" + "\n\t".join(samples_missing))
-    samples_found = [x for x in samples if x not in samples_missing]
+    samples = df_sam.loc[df_sam["Batch"]==args.batch_index]
+    if len(samples)==0:
+        print("-WARNING: batch %d not found in the table %s:" % (args.batch_index, args.samples_table))
 
     # copy to bucket and rename
-    for sample in samples_found:
+    for sample in samples:
         # copy
         bam_gs_uri = df_sam.loc[df_sam["Sample_Id"]==sample, "File_Name_Key"].item()
         bai_gs_uri = df_sam.loc[df_sam["Sample_Id"]==sample, "Index_File_Name_Key"].item()
@@ -67,12 +64,11 @@ def main(args):
 # run ==================================================================================================================
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Add Tumor_Sample and Normal_Sample fields.")
-    parser.add_argument('--samples_table', type=str, help='Path to input table.', default="config/samples.tsv")
+    parser = argparse.ArgumentParser(description="Add all BAM files from selected batch to gcloud bucket.")
+    parser.add_argument('--samples_table', type=str, help='Path to input table.', default="config/samples.all.tsv")
     parser.add_argument('--bucket_gs_uri', type=str, help='Google cloud storage URI to bucket.',
                         default="gs://tcga_wxs_bam")
-    parser.add_argument('--samples', type=str, nargs="+", help='Samples to be added to the bucket.',
-                        default=["TCGA-02-0003-01A-01D-1490-08", "TCGA-02-0003-10A-01D-1490-08"])
+    parser.add_argument('--batch_index', type=int, help='Index of the batch.')
     args = parser.parse_args()
 
     for arg in vars(args):

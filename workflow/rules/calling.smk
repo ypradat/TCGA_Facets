@@ -35,12 +35,13 @@ rule somatic_cnv_facets_tumor_normal:
         cval_pro=config["params"]["cnv"]["facets"]["cvals"]["pro"],
         gbuild=config["params"]["cnv"]["facets"]["gbuild"],
         dir="%s/calling/somatic_cnv_facets" % R_FOLDER
-    threads: 8
+    threads:
+        get_threads_facets
     resources:
         queue="shortq",
         mem_mb=64000,
         time_min=90,
-        load=50
+        load=get_load_facets
     shell:
         """
         cnv_facets.R \

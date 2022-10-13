@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @created: Oct 12 2022
-@modified: Oct 12 2022
+@modified: Oct 13 2022
 @author: Yoann Pradat
 
     CentraleSupelec
@@ -27,10 +27,13 @@ def main(args):
     df_sam = pd.read_table(args.samples_table)
 
     # check that samples requested are in the table
-    samples = df_sam.loc[df_sam["Batch"]==args.batch_index, "Sample_Id"].drop_duplicates().tolist()
+    if args.batch_index is not None:
+        samples = df_sam.loc[df_sam["Batch"]==args.batch_index, "Sample_Id"].drop_duplicates().tolist()
+    else:
+        samples = df_sam["Sample_Id"].drop_duplicates().tolist()
+
     if len(samples)==0:
         print("-WARNING: batch %d not found in the table %s:" % (args.batch_index, args.samples_table))
-
 
     # copy to bucket and rename
     for sample in samples:
@@ -53,10 +56,10 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Remove all BAM files from selected batch from gcloud bucket.")
-    parser.add_argument('--samples_table', type=str, help='Path to input table.', default="config/samples.all.tsv")
+    parser.add_argument('--samples_table', type=str, help='Path to input table.', default="config/samples.tsv")
     parser.add_argument('--bucket_gs_uri', type=str, help='Google cloud storage URI to bucket.',
                         default="gs://tcga_wxs_bam")
-    parser.add_argument('--batch_index', type=int, help='Index of the batch.')
+    parser.add_argument('--batch_index', type=int, help='Index of the batch.', default=None)
     args = parser.parse_args()
 
     for arg in vars(args):

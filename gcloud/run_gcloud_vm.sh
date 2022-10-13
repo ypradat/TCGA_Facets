@@ -16,16 +16,16 @@ while getopts ":b:" opt; do
     esac
 done
 
-# Populate the bucket tcga_wxs_bam
-python -u gcloud/populate_bam_gs_bucket.py \
-   --samples_table "config/samples.all.tsv" \
-   --bucket_gs_uri "gs://tcga_wxs_bam" \
-   --batch_index ${batch_index}
- 
+# # Populate the bucket tcga_wxs_bam
+# python -u gcloud/populate_bam_gs_bucket.py \
+#    --samples_table "config/samples.all.tsv" \
+#    --bucket_gs_uri "gs://tcga_wxs_bam" \
+#    --batch_index ${batch_index}
+#  
 # Extract disk size required for instance, considering a 50gb margin on top of the
 # BAM file sizes.
-file_sizes=$(awk -F '\t' \
-    '{if (NR==1) {sum=0} else if ($(NF)==1) {sum += $(NF-1)}} END {print sum;}' \
+file_sizes=$(awk -F '\t' -v i="${batch_index}" \
+    '{if (NR==1) {sum=0} else if ($(NF)==i) {sum += $(NF-1)}} END {print sum;}' \
     config/tumor_normal_pairs.all.tsv)
 instance_size=$(echo $file_sizes| awk '{print int($1+50)}')
 

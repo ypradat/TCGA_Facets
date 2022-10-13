@@ -35,6 +35,7 @@ rule all:
         expand("%s/annotation/somatic_cna_civic_filter/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
                get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
         "%s/upload.done" % L_FOLDER,
+        "%s/remove_bams.done" % L_FOLDER,
         # +++++++++++++++++++++++
         #### AGGREGATE
         # # +++++++++++++++++++++++
@@ -50,8 +51,7 @@ rule all:
 ##### Modules #####
 
 include: "rules/setup.smk"
-# include: "rules/external_resources.smk"
-include: "rules/download.smk"
+include: "rules/bam.smk"
 include: "rules/calling.smk"
 include: "rules/annotation.smk"
 include: "rules/upload.smk"

@@ -20,9 +20,6 @@ sudo sed -i -e 's/LANG=.*/LANG="nb_NO.UTF-8"/' /etc/default/locale
 sudo dpkg-reconfigure -f noninteractive locales
 
 # install conda and mamba
-echo "here is the pwd a: " "$PWD"
-echo "here is the path a: " "$PATH"
-echo "here is the pwd abis: " "$PWD"
 mkdir -p miniconda3
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3/miniconda.sh
 bash miniconda3/miniconda.sh -b -u -p miniconda3
@@ -49,14 +46,9 @@ cat <<'EOF'>>/home/ypradat/.condarc
 auto_activate_base: false
 EOF
 
-echo "here is the pwd b: " "$PWD"
-echo "here is the path b: " "$PATH"
-# source /home/ypradat/.bashrc
-export PATH="/home/ypradat/miniconda3/bin:$PATH"
+source /home/ypradat/.bashrc
 
 # install mamba
-echo "here is the pwd c: " "$PWD"
-echo "here is the path c: " "$PATH"
 conda activate /home/ypradat/miniconda3
 conda install -y -c conda-forge mamba
 
@@ -65,8 +57,8 @@ git clone https://ypradat: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@github.com/yp
 cd /home/ypradat/FacetsTCGA
 
 # get resources and external
-# gsutil -m cp -r gs://facets_tcga/external .
-# gsutil -m cp -r gs://facets_tcga/resources .
+gsutil -m cp -r gs://facets_tcga/external .
+gsutil -m cp -r gs://facets_tcga/resources .
 
 # prepare results folder
 mkdir -p results/mapping
@@ -77,11 +69,14 @@ mamba env create --prefix /home/ypradat/miniconda3/envs/snakemake -f workflow/en
 # activate snakemake and run
 conda activate /home/ypradat/miniconda3/envs/snakemake
 
-# # select samples
-# BATCH_INDEX=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/batch_index -H "Metadata-Flavor: Google")
-# 
-# awk -F '\t' -v i="${BATCH_INDEX}" 'NR==1; {if($(NF)==i) print $0}' config/samples.all.tsv > config/samples.tsv
-# awk -F '\t' -v i="${BATCH_INDEX}" 'NR==1; {if($(NF)==i) print $0}' config/tumor_normal_pairs.all.tsv > config/tumor_normal_pairs.tsv
+# select samples
+BATCH_INDEX=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/batch_index -H "Metadata-Flavor: Google")
+
+awk -F '\t' -v i="${BATCH_INDEX}" 'NR==1; {if($(NF)==i) print $0}' config/samples.all.tsv > config/samples.tsv
+awk -F '\t' -v i="${BATCH_INDEX}" 'NR==1; {if($(NF)==i) print $0}' config/tumor_normal_pairs.all.tsv > config/tumor_normal_pairs.tsv
+
+# set permissions to user
+sudo chown -R ypradat /home/ypradat
 
 # run the command
-# snakemake -s workflow/Snakefile --profile ./profile --resources load=100 -f
+snakemake -s workflow/Snakefile --profile ./profile --resources load=100 -fn

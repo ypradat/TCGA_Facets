@@ -74,24 +74,19 @@ def main(args):
 
     # create batches
     # some pairs were already processed during tests
-    dna_p_batch_0 = ["TCGA-05-4244-01A-01D-1105-08_vs_TCGA-05-4244-10A-01D-1105-08",
-                     "TCGA-05-4415-01A-22D-1855-08_vs_TCGA-05-4415-10A-01D-1855-08"]
-    df_tnp_a0 = df_tnp.loc[df_tnp["DNA_P"].isin(dna_p_batch_0)].copy()
-    df_tnp_a0["Batch"] = 0
-
-    dna_p_batch_1 = ["TCGA-02-0003-01A-01D-1490-08_vs_TCGA-02-0003-10A-01D-1490-08",
+    dna_p_batch_1 = ["TCGA-05-4244-01A-01D-1105-08_vs_TCGA-05-4244-10A-01D-1105-08",
+                     "TCGA-05-4415-01A-22D-1855-08_vs_TCGA-05-4415-10A-01D-1855-08",
+                     "TCGA-02-0003-01A-01D-1490-08_vs_TCGA-02-0003-10A-01D-1490-08",
                      "TCGA-FZ-5920-01A-11D-1609-08_vs_TCGA-FZ-5920-11A-01D-1609-08"]
-    df_tnp_a1 = df_tnp.loc[df_tnp["DNA_P"].isin(dna_p_batch_1)].copy()
-    df_tnp_a1["Batch"] = 1
-
-    df_tnp_a = pd.concat((df_tnp_a0, df_tnp_a1))
+    df_tnp_a = df_tnp.loc[df_tnp["DNA_P"].isin(dna_p_batch_1)].copy()
+    df_tnp_a["Batch"] = 1
 
     # create batches iteratively
     # constraint: batch sizes should not exceed 4 except in the case below.
     # constraint: one BAM file may belong to one batch only. Therefore, all BAM files involved in pairs sharing at least
     #   one BAM file must belong the same batch. This rule may be simplified by grouping together all pairs from the
     #   same subject.
-    df_tnp_b = df_tnp.loc[~df_tnp["DNA_P"].isin(dna_p_batch_1+dna_p_batch_0)].copy()
+    df_tnp_b = df_tnp.loc[~df_tnp["DNA_P"].isin(dna_p_batch_1)].copy()
     df_tnp_b["Batch"] = np.nan
 
     def add_pairs_from_sub(df_tnp_sub, cum_batch_size, cum_file_size, i_tnp_seen, r_tnp_batches, dry_run=False):

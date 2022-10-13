@@ -49,6 +49,16 @@ def main(args):
                                 subprocess.run(cmd_cp, shell=True)
                                 print("-copied file %s to bucket" % filepath_vm)
 
+    # upload VM log
+    home = "/home/ypradat"
+    vm_log = [x for for x in os.listdir(home) if x.startswith("startup_gcloud_vm")][0]
+    filepath_vm = os.path.join(home, vm_log)
+    filepath_gs = os.path.join(args.bucket_gs_uri, "logs/gcloud", vm_log)
+    cmd_cp = "gsutil cp %s %s" % (filepath_vm, filepath_gs)
+    subprocess.run(cmd_cp, shell=True)
+    print("-copied file %s to bucket" % filepath_vm)
+
+
 # run ==================================================================================================================
 
 if __name__ == "__main__":

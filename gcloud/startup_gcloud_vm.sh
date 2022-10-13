@@ -3,7 +3,13 @@
 sudo mkdir -p /home/ypradat
 cd /home/ypradat
 
-exec 3>&1 4>&2 >/home/ypradat/startup_gcloud_vm.log 2>&1
+batch_index=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/batch_index -H "Metadata-Flavor: Google")
+
+exec 3>&1 4>&2 >/home/ypradat/startup_gcloud_vm_${batch_index}.log 2>&1
+
+now_date="$(date +'%d/%m/%Y')"
+now_time="$(date +'%T')"
+printf "Start date and time: %s %s\n" "$now_date" "$now_time"
 
 # install git
 sudo apt --assume-yes install git
@@ -70,8 +76,6 @@ mamba env create --prefix /home/ypradat/miniconda3/envs/snakemake -f workflow/en
 conda activate /home/ypradat/miniconda3/envs/snakemake
 
 # select samples
-batch_index=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/batch_index -H "Metadata-Flavor: Google")
-
 awk -F '\t' -v i="${batch_index}" 'NR==1; {if($(NF)==i) print $0}' config/samples.all.tsv > config/samples.tsv
 awk -F '\t' -v i="${batch_index}" 'NR==1; {if($(NF)==i) print $0}' config/tumor_normal_pairs.all.tsv > config/tumor_normal_pairs.tsv
 
@@ -80,6 +84,10 @@ sudo chown -R ypradat /home/ypradat
 
 # run the command
 snakemake -s workflow/Snakefile --profile ./profile --resources load=100 -f
+
+now_date="$(date +'%d/%m/%Y')"
+now_time="$(date +'%T')"
+printf "\nEnd date and time: %s %s\n" "$now_date" "$now_time"
 
 # delete instance
 zone=$(curl -H Metadata-Flavor:Google http://metadata.google.internal/computeMetadata/v1/instance/zone -s | cut -d/ -f4)

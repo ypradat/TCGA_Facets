@@ -87,11 +87,11 @@ def get_load_facets(wildcards):
     # assume a pair file size below 50 gb will consume less than 16 gb RAM, allow to run 4 pairs in parallel
     # assume a pair file size below 100gb should run alone
     if size_dna_p >= 100:
-        load = 100
-    elif size_dna_p >= 50:
         load = 50
+    elif size_dna_p >= 50:
+        load = 40
     else:
-        load = 25
+        load = 20
 
     return load
 
@@ -99,11 +99,11 @@ def get_load_facets(wildcards):
 def get_threads_facets(wildcards):
     load = get_load_facets(wildcards)
 
-    if load==100:
-        threads = 16
-    elif load==50:
+    if load==50:
         threads = 8
+    elif load==50:
+        threads = 6
     else:
-        threads = 4
+        threads = 3
 
     return threads

@@ -46,5 +46,6 @@ gcloud compute instances create facets-tcga-${batch_index} \
     --shielded-vtpm \
     --shielded-integrity-monitoring \
     --reservation-affinity=any \
+    --preemptible \
     --metadata-from-file=startup-script=./gcloud/startup_gcloud_vm.sh \
     --metadata=batch_index=${batch_index}

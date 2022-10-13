@@ -16,15 +16,9 @@
 #     esac
 # done
 
-for batch_index in `seq 4 50`
+for batch_index in `seq 4 5`
 do
-    echo "running batch: " "${bach_index}" "..."
-
-    # Populate the bucket tcga_wxs_bam
-    python -u gcloud/populate_bam_gs_bucket.py \
-       --samples_table "config/samples.all.tsv" \
-       --bucket_gs_uri "gs://tcga_wxs_bam" \
-       --batch_index ${batch_index}
+    echo "running batch: " "${batch_index}" "..."
 
     # Extract disk size required for instance, considering a 50gb margin on top of the
     # BAM file sizes.

@@ -82,6 +82,9 @@ awk -F '\t' -v i="${batch_index}" 'NR==1; {if($(NF)==i) print $0}' config/tumor_
 # set permissions to user
 sudo chown -R ypradat /home/ypradat
 
+# add batch_index to config
+echo "batch_index: ${batch_index}" >>config/config.yaml
+
 # run the command
 snakemake -s workflow/Snakefile --profile ./profile --resources load=100 -f
 

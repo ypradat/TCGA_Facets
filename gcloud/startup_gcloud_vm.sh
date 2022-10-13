@@ -79,4 +79,4 @@ awk -F '\t' -v i="${BATCH_INDEX}" 'NR==1; {if($(NF)==i) print $0}' config/tumor_
 sudo chown -R ypradat /home/ypradat
 
 # run the command
-snakemake -s workflow/Snakefile --profile ./profile --resources load=100 -fn
+snakemake -s workflow/Snakefile --profile ./profile --resources load=100 -f

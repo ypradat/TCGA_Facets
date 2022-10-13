@@ -1,26 +1,26 @@
-# Add BAM files from the bucket tcga_wxs_bam
-rule add_bams:
-    log:
-        "%s/mapping/add_bams.log" % L_FOLDER
-    benchmark:
-        "%s/mapping/add_bams.tsv" % B_FOLDER
-    params:
-        gs_bucket = "gs://tcga_wxs_bam",
-        samples_table = "config/samples.all.tsv",
-        batch_index = config["batch_index"]
-    output:
-        touch("%s/add_bams.done" % L_FOLDER)
-    resources:
-        mem_mb=1000,
-        time_min=120
-    threads: 1
-    shell:
-        """
-        python -u gcloud/populate_bam_gs_bucket.py \
-           --samples_table {params.samples_table} \
-           --bucket_gs_uri {params.gs_bucket} \
-           --batch_index {params.batch_index} &> {log}
-        """
+# # Add BAM files from the bucket tcga_wxs_bam
+# rule add_bams:
+#     log:
+#         "%s/mapping/add_bams.log" % L_FOLDER
+#     benchmark:
+#         "%s/mapping/add_bams.tsv" % B_FOLDER
+#     params:
+#         gs_bucket = "gs://tcga_wxs_bam",
+#         samples_table = "config/samples.all.tsv",
+#         batch_index = config["batch_index"]
+#     output:
+#         touch("%s/add_bams.done" % L_FOLDER)
+#     resources:
+#         mem_mb=1000,
+#         time_min=120
+#     threads: 1
+#     shell:
+#         """
+#         python -u gcloud/populate_bam_gs_bucket.py \
+#            --samples_table {params.samples_table} \
+#            --bucket_gs_uri {params.gs_bucket} \
+#            --batch_index {params.batch_index} &> {log}
+#         """
 
 # Get BAM files from the bucket tcga_wxs_bam
 rule download_bam:
@@ -30,7 +30,7 @@ rule download_bam:
         "%s/mapping/gdc_get_bam_{sample}.tsv" % B_FOLDER
     input:
         table = config["samples"],
-        done = "%s/add_bams.done" % L_FOLDER
+        # done = "%s/add_bams.done" % L_FOLDER
     params:
         gs_bucket = "gs://tcga_wxs_bam",
         local_dir = "%s/mapping" % R_FOLDER,

@@ -52,7 +52,7 @@ def main(args):
 # run ==================================================================================================================
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Add Tumor_Sample and Normal_Sample fields.")
+    parser = argparse.ArgumentParser(description="Upload results to bucket.")
     parser.add_argument('--bucket_gs_uri', type=str, help='Google cloud storage URI to bucket.',
                         default="gs://facets_tcga_results")
     args = parser.parse_args()

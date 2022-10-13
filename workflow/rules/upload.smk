@@ -33,6 +33,6 @@ rule upload_results:
         gs_bucket = "gs://facets_tcga_results"
     shell:
         """
-        python -u workflow/scripts/populate_results_gs_bucket.py \
+        python -u gcloud/populate_results_gs_bucket.py \
             --bucket_gs_uri {params.gs_bucket} &> {log}
         """

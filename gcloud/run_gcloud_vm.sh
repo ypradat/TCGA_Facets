@@ -22,12 +22,12 @@ python -u gcloud/populate_bam_gs_bucket.py \
    --bucket_gs_uri "gs://tcga_wxs_bam" \
    --batch_index ${batch_index}
 
-# Extract disk size required for instance, considering a 20gb margin on top of the
+# Extract disk size required for instance, considering a 50gb margin on top of the
 # BAM file sizes.
 file_sizes=$(awk -F '\t' \
     '{if (NR==1) {sum=0} else if ($(NF)==1) {sum += $(NF-1)}} END {print sum;}' \
     config/tumor_normal_pairs.all.tsv)
-instance_size=$(echo $file_sizes| awk '{print int($1+20)}')
+instance_size=$(echo $file_sizes| awk '{print int($1+50)}')
 
 # Create the instance and run the pipeline via the startup script
 gcloud compute instances create facets-tcga-${batch_index} \

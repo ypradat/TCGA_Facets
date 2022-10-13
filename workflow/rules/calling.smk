@@ -79,7 +79,8 @@ rule somatic_cnv_table:
     resources:
         queue="shortq",
         mem_mb=8000,
-        time_min=20
+        time_min=20,
+        load=1
     shell:
         """
         python -u workflow/scripts/06.1_cnv_vcf_to_table.py \
@@ -106,7 +107,8 @@ rule somatic_cnv_bed:
     resources:
         queue="shortq",
         mem_mb=8000,
-        time_min=20
+        time_min=20,
+        load=1
     shell:
         """
         python -u workflow/scripts/06.2_cnv_table_to_bed.py \
@@ -137,7 +139,8 @@ rule somatic_cnv_chr_arm_sum:
     resources:
         queue="shortq",
         mem_mb=8000,
-        time_min=20
+        time_min=20,
+        load=1
     shell:
         """
         Rscript workflow/scripts/06.3_cnv_chr_arm_sum.R \
@@ -168,7 +171,8 @@ rule somatic_cnv_calls:
     resources:
         queue="shortq",
         mem_mb=8000,
-        time_min=20
+        time_min=20,
+        load=1
     shell:
         """
         python -u workflow/scripts/06.4_cnv_filter_calls.py \

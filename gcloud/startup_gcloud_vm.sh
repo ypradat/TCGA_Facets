@@ -70,13 +70,17 @@ mamba env create --prefix /home/ypradat/miniconda3/envs/snakemake -f workflow/en
 conda activate /home/ypradat/miniconda3/envs/snakemake
 
 # select samples
-BATCH_INDEX=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/batch_index -H "Metadata-Flavor: Google")
+batch_index=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/batch_index -H "Metadata-Flavor: Google")
 
-awk -F '\t' -v i="${BATCH_INDEX}" 'NR==1; {if($(NF)==i) print $0}' config/samples.all.tsv > config/samples.tsv
-awk -F '\t' -v i="${BATCH_INDEX}" 'NR==1; {if($(NF)==i) print $0}' config/tumor_normal_pairs.all.tsv > config/tumor_normal_pairs.tsv
+awk -F '\t' -v i="${batch_index}" 'NR==1; {if($(NF)==i) print $0}' config/samples.all.tsv > config/samples.tsv
+awk -F '\t' -v i="${batch_index}" 'NR==1; {if($(NF)==i) print $0}' config/tumor_normal_pairs.all.tsv > config/tumor_normal_pairs.tsv
 
 # set permissions to user
 sudo chown -R ypradat /home/ypradat
 
 # run the command
 snakemake -s workflow/Snakefile --profile ./profile --resources load=100 -f
+
+# delete instance
+zone=$(curl -H Metadata-Flavor:Google http://metadata.google.internal/computeMetadata/v1/instance/zone -s | cut -d/ -f4)
+gcloud compute instances delete $(hostname) --zone=${zone} --delete-disks=all --quiet

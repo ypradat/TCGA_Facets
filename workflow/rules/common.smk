@@ -97,6 +97,7 @@ def get_load_facets(wildcards):
 
 
 def get_threads_facets(wildcards):
+    n_tnp = pd.read_table(config["tumor_normal_pairs"]).shape[0]
     load = get_load_facets(wildcards)
 
     if load==50:
@@ -104,6 +105,13 @@ def get_threads_facets(wildcards):
     elif load==50:
         threads = 6
     else:
-        threads = 3
+        if n_tnp >= 4:
+            threads = 3
+        elif n_tnp == 3:
+            threads = 4
+        elif n_tnp == 2:
+            threads = 8
+        else:
+            threads = 16
 
     return threads

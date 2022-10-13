@@ -40,7 +40,7 @@ rule download_bam:
     resources:
         mem_mb=1000,
         time_min=120,
-        load=10
+        load=1
     threads: 1
     shell:
         """

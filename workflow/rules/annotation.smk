@@ -25,7 +25,7 @@ if config["params"]["oncokb"]["run_per_sample"]["cna"]:
         threads: 1
         resources:
             queue="shortq",
-            mem_mb=5000,
+            mem_mb=2000,
             time_min=20
         shell:
             """
@@ -60,7 +60,7 @@ else:
         threads: 1
         resources:
             queue="shortq",
-            mem_mb=5000,
+            mem_mb=2000,
             time_min=20
         shell:
             """
@@ -94,7 +94,7 @@ rule somatic_cna_oncokb:
     threads: 1
     resources:
         queue="shortq",
-        mem_mb=5000,
+        mem_mb=2000,
         time_min=60
     shell:
         """
@@ -124,7 +124,7 @@ rule somatic_cna_oncokb_filter:
     threads: 1
     resources:
         queue="shortq",
-        mem_mb=5000,
+        mem_mb=2000,
         time_min=10
     shell:
         """
@@ -157,7 +157,7 @@ if config["params"]["civic"]["run_per_sample"]["cna"]:
         threads: 1
         resources:
             queue="shortq",
-            mem_mb=5000,
+            mem_mb=2000,
             time_min=20
         shell:
             """
@@ -190,7 +190,7 @@ else:
         threads: 1
         resources:
             queue="shortq",
-            mem_mb=5000,
+            mem_mb=2000,
             time_min=20
         shell:
             """
@@ -224,7 +224,7 @@ rule somatic_cna_civic:
     threads: 1
     resources:
         queue="shortq",
-        mem_mb=5000,
+        mem_mb=2000,
         time_min=60
     shell:
         """
@@ -252,7 +252,7 @@ rule somatic_cna_civic_filter:
     threads: 1
     resources:
         queue="shortq",
-        mem_mb=5000,
+        mem_mb=2000,
         time_min=10
     shell:
         """

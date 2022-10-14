@@ -39,7 +39,7 @@ rule somatic_cnv_facets_tumor_normal:
         get_threads_facets
     resources:
         queue="shortq",
-        mem_mb=64000,
+        mem_mb=28000,
         time_min=90,
         load=get_load_facets
     shell:
@@ -78,7 +78,7 @@ rule somatic_cnv_table:
         gender = lambda w: get_column_table_sample(w, "Gender")
     resources:
         queue="shortq",
-        mem_mb=8000,
+        mem_mb=2000,
         time_min=20,
         load=1
     shell:
@@ -106,7 +106,7 @@ rule somatic_cnv_bed:
     threads: 1
     resources:
         queue="shortq",
-        mem_mb=8000,
+        mem_mb=2000,
         time_min=20,
         load=1
     shell:
@@ -138,7 +138,7 @@ rule somatic_cnv_chr_arm_sum:
         genome=config["params"]["cnv"]["facets"]["gbuild"]
     resources:
         queue="shortq",
-        mem_mb=8000,
+        mem_mb=2000,
         time_min=20,
         load=1
     shell:
@@ -170,7 +170,7 @@ rule somatic_cnv_calls:
     threads: 1
     resources:
         queue="shortq",
-        mem_mb=8000,
+        mem_mb=2000,
         time_min=20,
         load=1
     shell:

@@ -10,4 +10,3 @@ now_date="$(date +'%d/%m/%Y')"
 now_time="$(date +'%T')"
 printf "\nStart date and time at preemption: %s %s\n" "$now_date" "$now_time"
 touch $preempted
-

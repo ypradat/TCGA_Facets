@@ -63,28 +63,12 @@ gcloud logging write ${gcloud_log_name} \
     --payload-type=json \
     --severity=INFO
 
-cat <<'EOF' >>/home/ypradat/.bashrc
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
-__conda_setup="$('/home/ypradat/miniconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
-if [ $? -eq 0 ]; then
-    eval "$__conda_setup"
-else
-    if [ -f "/home/ypradat/miniconda3/etc/profile.d/conda.sh" ]; then
-        . "/home/ypradat/miniconda3/etc/profile.d/conda.sh"
-    else
-        export PATH="/home/ypradat/miniconda3/bin:$PATH"
-    fi
-fi
-unset __conda_setup
-# <<< conda initialize <<<
-EOF
-
 cat <<'EOF'>>/home/ypradat/.condarc
 auto_activate_base: false
 EOF
 
-source /home/ypradat/.bashrc
+# set the path in order to find the conda command
+export PATH="/home/ypradat/miniconda3/bin:/home/ypradat/miniconda3/condabin:$PATH"
 
 # log message
 gcloud logging write ${gcloud_log_name} \
@@ -121,8 +105,8 @@ gcloud logging write ${gcloud_log_name} \
     --severity=INFO
 
 # get resources and external
-# gsutil -m cp -r gs://facets_tcga/external .
-# gsutil -m cp -r gs://facets_tcga/resources .
+gsutil -m cp -r gs://facets_tcga/external .
+gsutil -m cp -r gs://facets_tcga/resources .
 
 # log message
 gcloud logging write ${gcloud_log_name} \
@@ -136,12 +120,6 @@ mkdir -p results/mapping
 # prepare for running snakemake
 snakemake_env_dir=/home/ypradat/miniconda3/envs/snakemake
 mamba env create --prefix ${snakemake_env_dir} -f workflow/envs/snakemake.yaml
-
-# log message
-gcloud logging write ${gcloud_log_name} \
-    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "create snakemake environment done."}' \
-    --payload-type=json \
-    --severity=INFO
 
 # log message
 if [[ -d "${snakemake_env_dir}" ]]; then
@@ -178,12 +156,12 @@ echo "batch_index: ${batch_index}" >>config/config.yaml
 
 # log message
 gcloud logging write ${gcloud_log_name} \
-    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "starting pipeline."}' \
+    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "started pipeline."}' \
     --payload-type=json \
     --severity=INFO
 
 # run the pipeline
-snakemake -s workflow/Snakefile --profile ./profile --resources load=100 -fn
+snakemake -s workflow/Snakefile --profile ./profile --resources load=110 -fn
 
 # log message
 gcloud logging write ${gcloud_log_name} \

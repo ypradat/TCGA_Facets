@@ -89,7 +89,7 @@ def get_load_facets(wildcards):
     if size_dna_p >= 100:
         load = 50
     elif size_dna_p >= 50:
-        load = 40
+        load = 30
     else:
         load = 20
 
@@ -102,8 +102,15 @@ def get_threads_facets(wildcards):
 
     if load==50:
         threads = 8
-    elif load==50:
-        threads = 6
+    elif load==30:
+        elif n_tnp >= 4:
+            threads = 4
+        elif n_tnp == 3:
+            threads = 5
+        elif n_tnp == 2:
+            threads = 8
+        else:
+            threads = 16
     else:
         if n_tnp >= 4:
             threads = 3

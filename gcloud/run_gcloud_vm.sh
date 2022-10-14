@@ -77,5 +77,6 @@ do
 	--provisioning-model=SPOT \
 	--preemptible \
 	--metadata-from-file=startup-script=./gcloud/startup_gcloud_vm.sh \
+	--metadata-from-file=shutdown-script=./gcloud/shutdown_gcloud_vm.sh \
 	--metadata=batch_index=${batch_index}
 done

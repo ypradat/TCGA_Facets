@@ -15,6 +15,7 @@ now_date="$(date +'%d/%m/%Y')"
 now_time="$(date +'%T')"
 printf "Start date and time: %s %s\n" "$now_date" "$now_time"
 printf "Instance id: %s\n" "$instance_id"
+printf "Instance name: %s\n\n" "$(hostname)"
 
 # log message
 gcloud logging write ${gcloud_log_name} \
@@ -161,7 +162,7 @@ gcloud logging write ${gcloud_log_name} \
     --severity=INFO
 
 # run the pipeline
-snakemake -s workflow/Snakefile --profile ./profile --resources load=110 -fn
+snakemake -s workflow/Snakefile --profile ./profile --resources load=110 -f
 
 # log message
 gcloud logging write ${gcloud_log_name} \
@@ -175,4 +176,4 @@ now_time="$(date +'%T')"
 printf "\nEnd date and time: %s %s\n" "$now_date" "$now_time"
 
 # delete instance
-# gcloud compute instances delete $(hostname) --zone=${zone} --delete-disks=all --quiet
+gcloud compute instances delete $(hostname) --zone=${zone} --delete-disks=all --quiet

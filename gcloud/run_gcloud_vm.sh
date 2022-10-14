@@ -1,28 +1,48 @@
 #!/bin/bash
 
-# while getopts ":b:" opt; do
-#     case $opt in
-# 	b) batch_index="$OPTARG"
-# 	    ;;
-# 	\?) echo "Invalid option -$OPTARG" >&2
-# 	    exit 1
-# 	    ;;
-#     esac
-# 
-#     case $OPTARG in
-# 	-*) echo "Option $opt needs a valid argument"
-# 	    exit 1
-# 	    ;;
-#     esac
-# done
+while getopts ":a:b:" opt; do
+    case $opt in
+	a) batch_min="$OPTARG"
+	    ;;
+	b) batch_max="$OPTARG"
+	    ;;
+	\?) echo "Invalid option -$OPTARG" >&2
+	    exit 1
+	    ;;
+    esac
 
-for batch_index in `seq 5 5`
+    case $OPTARG in
+	-*) echo "Option $opt needs a valid argument"
+	    exit 1
+	    ;;
+    esac
+done
+
+
+# generate list of batch indices between batch_beg and batch_end removing
+# indices already processed.
+batch_list=gcloud/batch_indices.txt
+python -u gcloud/generate_batch_indices.py \
+    --samples_table config/samples.all.tsv \
+    --logs_uri "gs://facets_tcga_results/logs/gcloud" \
+    --batch_min ${batch_min} \
+    --batch_max ${batch_max} \
+    --batch_list ${batch_list}
+
+# read the list of batch indices to be processed.
+batch_indices=()
+while IFS= read -r line; do
+   batch_indices+=("$line")
+done <${batch_list}
+rm ${batch_list}
+
+for batch_index in "${batch_indices[@]}"
 do
     echo "running batch: " "${batch_index}" "..."
 
     # # Add BAM to the bucket
     # python -u gcloud/populate_bam_gs_bucket.py \
-    #    --samples_table "config/samples.all.tsv" \
+    #    --samples_table config/samples.all.tsv \
     #    --bucket_gs_uri "gs://tcga_wxs_bam" \
     #    --batch_index ${batch_index}
 

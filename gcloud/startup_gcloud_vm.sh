@@ -6,11 +6,11 @@ batch_index=$(curl http://metadata.google.internal/computeMetadata/v1/instance/a
 zone=$(curl -H Metadata-Flavor:Google http://metadata.google.internal/computeMetadata/v1/instance/zone -s | cut -d/ -f4)
 instance_id=$(gcloud compute instances describe $(hostname) --zone=${zone} --format="get(id)")
 gcloud_log_name=startup-gcloud-vm-${batch_index}
-local_log_name=startup_gcloud_vm_${batch_index}.log
+gcloud_log_vm=/home/ypradat/startup_gcloud_vm_${batch_index}.log
 snakemake_env_dir=/home/ypradat/miniconda3/envs/snakemake
 
-if [[-f "$local_log_name"]]; then
-    exec 3>&1 4>&2 >>/home/ypradat/${local_log_name} 2>&1
+if [[-f "${gcloud_log_vm}"]]; then
+    exec 3>&1 4>&2 >>${gcloud_log_vm} 2>&1
 
     now_date="$(date +'%d/%m/%Y')"
     now_time="$(date +'%T')"
@@ -38,7 +38,7 @@ if [[-f "$local_log_name"]]; then
     gcloud compute instances delete $(hostname) --zone=${zone} --delete-disks=all --quiet
 
 else
-    exec 3>&1 4>&2 >/home/ypradat/${local_log_name} 2>&1
+    exec 3>&1 4>&2 >${gcloud_log_vm} 2>&1
 
     now_date="$(date +'%d/%m/%Y')"
     now_time="$(date +'%T')"

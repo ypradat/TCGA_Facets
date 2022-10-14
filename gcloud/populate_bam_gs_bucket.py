@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @created: Oct 11 2022
-@modified: Oct 12 2022
+@modified: Oct 14 2022
 @author: Yoann Pradat
 
     CentraleSupelec
@@ -70,9 +70,5 @@ if __name__ == "__main__":
                         default="gs://tcga_wxs_bam")
     parser.add_argument('--batch_index', type=int, help='Index of the batch.')
     args = parser.parse_args()
-
-    for arg in vars(args):
-        print("%s: %s" % (arg, getattr(args, arg)))
-    print("\n")
 
     main(args)

@@ -62,8 +62,4 @@ if __name__ == "__main__":
                         default="gcloud/batch_indices.txt")
     args = parser.parse_args()
 
-    for arg in vars(args):
-        print("%s: %s" % (arg, getattr(args, arg)))
-    print("\n")
-
     main(args)

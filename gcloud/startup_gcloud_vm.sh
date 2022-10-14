@@ -162,7 +162,7 @@ gcloud logging write ${gcloud_log_name} \
     --severity=INFO
 
 # run the pipeline
-snakemake -s workflow/Snakefile --profile ./profile --resources load=110 -f
+snakemake -s workflow/Snakefile --profile ./profile --resources load=115 --jobs 50 -f
 
 # log message
 gcloud logging write ${gcloud_log_name} \

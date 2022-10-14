@@ -1,5 +1,6 @@
 #!/bin/bash
 
+sudo mkdir /home/ypradat
 cd /home/ypradat
 
 batch_index=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/batch_index -H "Metadata-Flavor: Google")
@@ -32,6 +33,7 @@ if [[-f "$preempted"]]; then
 
     # delete instance
     gcloud compute instances delete $(hostname) --zone=${zone} --delete-disks=all --quiet
+
 else
     exec 3>&1 4>&2 >/home/ypradat/${local_log_name} 2>&1
 

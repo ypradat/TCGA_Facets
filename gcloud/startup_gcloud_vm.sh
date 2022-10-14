@@ -1,6 +1,5 @@
 #!/bin/bash
 
-sudo mkdir /home/ypradat
 cd /home/ypradat
 
 batch_index=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/batch_index -H "Metadata-Flavor: Google")

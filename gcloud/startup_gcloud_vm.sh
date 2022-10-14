@@ -72,12 +72,12 @@ export PATH="/home/ypradat/miniconda3/bin:/home/ypradat/miniconda3/condabin:$PAT
 
 # log message
 gcloud logging write ${gcloud_log_name} \
-    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "source .bashrc done.", "PATH": "'$PATH'", "PWD": "'$PWD'"}' \
+    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "set PATH manually done.", "PATH": "'$PATH'", "PWD": "'$PWD'"}' \
     --payload-type=json \
     --severity=INFO
 
 # install mamba
-conda activate /home/ypradat/miniconda3
+source activate /home/ypradat/miniconda3
 conda install -y -c conda-forge mamba
 
 # log message
@@ -136,7 +136,7 @@ else
 fi
 
 # activate snakemake and run
-conda activate /home/ypradat/miniconda3/envs/snakemake
+source activate ${snakemake_env_dir}
 
 # select samples
 awk -F '\t' -v i="${batch_index}" 'NR==1; {if($(NF)==i) print $0}' config/samples.all.tsv > config/samples.tsv

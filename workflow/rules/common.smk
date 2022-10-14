@@ -103,7 +103,7 @@ def get_threads_facets(wildcards):
     if load==50:
         threads = 8
     elif load==30:
-        elif n_tnp >= 4:
+        if n_tnp >= 4:
             threads = 4
         elif n_tnp == 3:
             threads = 5

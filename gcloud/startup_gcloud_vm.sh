@@ -8,6 +8,7 @@ instance_id=$(gcloud compute instances describe $(hostname) --zone=${zone} --for
 gcloud_log_name=startup-gcloud-vm-${batch_index}
 local_log_name=startup_gcloud_vm_${batch_index}.log
 preempted=/home/ypradat/preempted.done
+snakemake_env_dir=/home/ypradat/miniconda3/envs/snakemake
 
 if [[-f "$preempted"]]; then
     exec 3>&1 4>&2 >>/home/ypradat/${local_log_name} 2>&1
@@ -15,6 +16,10 @@ if [[-f "$preempted"]]; then
     now_date="$(date +'%d/%m/%Y')"
     now_time="$(date +'%T')"
     printf "\nStart date and time after preemption: %s %s\n" "$now_date" "$now_time"
+
+    # activate snakemake and run
+    cd /home/ypradat/FacetsTCGA
+    source activate ${snakemake_env_dir}
 
     # run the pipeline, rerunning incomplete jobs
     snakemake -s workflow/Snakefile --profile ./profile --resources load=115 --jobs 50 -f --rerun-incomplete
@@ -140,7 +145,6 @@ else
     mkdir -p results/mapping
 
     # prepare for running snakemake
-    snakemake_env_dir=/home/ypradat/miniconda3/envs/snakemake
     mamba env create --prefix ${snakemake_env_dir} -f workflow/envs/snakemake.yaml
 
     # log message

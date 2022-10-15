@@ -8,19 +8,46 @@ instance_id=$(gcloud compute instances describe $(hostname) --zone=${zone} --for
 gcloud_log_name=startup-gcloud-vm-${batch_index}
 gcloud_log_vm=/home/ypradat/startup_gcloud_vm_${batch_index}.log
 snakemake_env_dir=/home/ypradat/miniconda3/envs/snakemake
+preempted=/home/ypradat/preempted.done
 
-if [[-f "${gcloud_log_vm}"]]; then
+function join_by {
+  local d=${1-} f=${2-}
+  if shift 2; then
+    printf %s "$f" "${@/#/$d}"
+  fi
+}
+
+home_content=$(ls /home/ypradat/)
+home_content=$(join_by , $home_content)
+
+# log message
+gcloud logging write ${gcloud_log_name} \
+    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "home content '${home_content}'"}' \
+    --payload-type=json \
+    --severity=INFO
+
+if [[ -f "${preempted}" ]]; then
     exec 3>&1 4>&2 >>${gcloud_log_vm} 2>&1
+
+    # log message
+    gcloud logging write ${gcloud_log_name} \
+	'{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "starting again a preempted job."}' \
+	--payload-type=json \
+	--severity=INFO
 
     now_date="$(date +'%d/%m/%Y')"
     now_time="$(date +'%T')"
     printf "\nStart date and time after preemption: %s %s\n" "$now_date" "$now_time"
+
+    # set the path in order to find the conda command
+    export PATH="/home/ypradat/miniconda3/bin:/home/ypradat/miniconda3/condabin:$PATH"
 
     # activate snakemake and run
     cd /home/ypradat/FacetsTCGA
     source activate ${snakemake_env_dir}
 
     # run the pipeline, rerunning incomplete jobs
+    snakemake -s workflow/Snakefile --profile ./profile --resources load=115 --jobs 50 -f --unlock
     snakemake -s workflow/Snakefile --profile ./profile --resources load=115 --jobs 50 -f --rerun-incomplete
 
     # log message
@@ -60,12 +87,6 @@ else
 
     # install wget
     sudo apt --assume-yes install wget
-
-    # log message
-    gcloud logging write ${gcloud_log_name} \
-	'{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "sudo apt install git/wget done.", "PATH": "'$PATH'", "PWD": "'$PWD'"}' \
-	--payload-type=json \
-	--severity=INFO
 
     # install locales to avoid warning "/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)"
     sudo apt --assume-yes install locales
@@ -122,7 +143,6 @@ else
 
     # get the code
     git clone https://ypradat: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@github.com/ypradat/FacetsTCGA.git /home/ypradat/FacetsTCGA
-    cd /home/ypradat/FacetsTCGA
 
     # log message
     gcloud logging write ${gcloud_log_name} \
@@ -131,6 +151,7 @@ else
 	--severity=INFO
 
     # get resources and external
+    cd /home/ypradat/FacetsTCGA
     gsutil -m cp -r gs://facets_tcga/external .
     gsutil -m cp -r gs://facets_tcga/resources .
 
@@ -140,10 +161,7 @@ else
 	--payload-type=json \
 	--severity=INFO
 
-    # prepare results folder
-    mkdir -p results/mapping
-
-    # prepare for running snakemake
+    # create env for running snakemake
     mamba env create --prefix ${snakemake_env_dir} -f workflow/envs/snakemake.yaml
 
     # log message
@@ -152,7 +170,6 @@ else
 	    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "create snakemake env successful.", "PATH": "'$PATH'", "PWD": "'$PWD'"}' \
 	    --payload-type=json \
 	    --severity=INFO
-
     else
 	gcloud logging write ${gcloud_log_name} \
 	    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "create snakemake env failed.", "PATH": "'$PATH'", "PWD": "'$PWD'"}' \
@@ -175,9 +192,6 @@ else
 
     # set permissions to user
     sudo chown -R ypradat /home/ypradat
-
-    # add batch_index to config
-    echo "batch_index: ${batch_index}" >>config/config.yaml
 
     # log message
     gcloud logging write ${gcloud_log_name} \

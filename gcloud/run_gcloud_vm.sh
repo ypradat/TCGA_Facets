@@ -41,11 +41,11 @@ do
     printf "\n======================================\n"
     printf "running batch: %s ...\n" "${batch_index}"
 
-    # # Add BAMs to the bucket
-    # python -u gcloud/populate_bam_gs_bucket.py \
-    #    --samples_table config/samples.all.tsv \
-    #    --bucket_gs_uri "gs://tcga_wxs_bam" \
-    #    --batch_index ${batch_index}
+    # Add BAMs to the bucket
+    python -u gcloud/populate_bam_gs_bucket.py \
+       --samples_table config/samples.all.tsv \
+       --bucket_gs_uri "gs://tcga_wxs_bam" \
+       --batch_index ${batch_index}
 
     printf "\n\n"
 

@@ -20,7 +20,6 @@ done
 printf -- "-INFO: this script will check for instances that have terminated and restart them every %s seconds\n" "${frequency}"
 
 # identify instances that are alive (running or terminated)
-sleep ${frequency}s
 IFS=$'\n' read -r -d '' -a instances_alive < <( gcloud compute instances list --zones=us-central1-a --filter="name~facets-tcga-[\d]+" --format="value(NAME)" 2> >(grep -v "WARNING") && printf '\0' )
 
 i=1
@@ -39,7 +38,9 @@ do
 	printf -- "  restarting TERMINATED instance(s)...\n"
 	for instance_terminated in "${instances_terminated[@]}"
 	do
-	    gcloud compute instances start ${instance_terminated}
+	    gcloud compute instances start ${instance_terminated}  \
+                --project=isb-cgc-external-001 \
+                --zone=us-central1-a
 	    printf -- "  restarted instance %s\n" "${instance_terminated}"
 	done
     fi

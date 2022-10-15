@@ -8,7 +8,6 @@ instance_id=$(gcloud compute instances describe $(hostname) --zone=${zone} --for
 gcloud_log_name=startup-gcloud-vm-${batch_index}
 gcloud_log_vm=/home/ypradat/startup_gcloud_vm_${batch_index}.log
 snakemake_env_dir=/home/ypradat/miniconda3/envs/snakemake
-preempted=/home/ypradat/preempted.done
 
 function join_by {
   local d=${1-} f=${2-}
@@ -26,7 +25,7 @@ gcloud logging write ${gcloud_log_name} \
     --payload-type=json \
     --severity=INFO
 
-if [[ -f "${preempted}" ]]; then
+if [[ -f "${gcloud_log_vm}" ]]; then
     exec 3>&1 4>&2 >>${gcloud_log_vm} 2>&1
 
     # log message

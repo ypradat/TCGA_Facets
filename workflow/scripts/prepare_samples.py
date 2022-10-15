@@ -148,6 +148,9 @@ def main(args):
     df_tnp_batch = pd.concat((df_tnp_batch_t, df_tnp_batch_n)).drop_duplicates()
     df_sam = df_sam.merge(df_tnp_batch, how="left", on="Sample_Id")
 
+    # add file size in Gb
+    df_sam.insert(df_sam.shape[1]-1, "Total_Size_Gb", (df_sam["File_Size"]+df_sam["Index_File_Size"])/1024**3)
+
     # save table of samples
     df_sam.to_csv(args.out_sam, index=False, sep="\t")
 

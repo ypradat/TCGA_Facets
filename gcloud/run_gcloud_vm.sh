@@ -52,8 +52,8 @@ do
     # Extract disk size required for instance, considering a 50gb margin on top of the
     # BAM file sizes.
     file_sizes=$(awk -F '\t' -v i="${batch_index}" \
-	'{if (NR==1) {sum=0} else if ($(NF)==i) {sum += $(NF-1)}} END {print sum;}' \
-	config/tumor_normal_pairs.all.tsv)
+        '{if (NR==1) {sum=0} else if ($(NF)==i) {sum += $(NF-1)}} END {print sum;}' \
+        config/samples.all.tsv)
     instance_size=$(echo $file_sizes| awk '{print int($1+50)}')
 
     # Create the instance and run the pipeline via the startup script

@@ -22,7 +22,7 @@ done
 # generate list of batch indices between batch_beg and batch_end removing
 # indices already processed.
 batch_list=gcloud/batch_indices.txt
-python -u gcloud/generate_batch_indices.py \
+python -u gcloud/others/generate_batch_indices.py \
     --samples_table config/samples.all.tsv \
     --logs_uri "gs://facets_tcga_results/logs/gcloud" \
     --batch_min ${batch_min} \
@@ -42,7 +42,7 @@ do
     printf "running batch: %s ...\n" "${batch_index}"
 
     # Add BAMs to the bucket
-    python -u gcloud/populate_bam_gs_bucket.py \
+    python -u gcloud/buckets/populate_bam_gs_bucket.py \
        --samples_table config/samples.all.tsv \
        --bucket_gs_uri "gs://tcga_wxs_bam" \
        --batch_index ${batch_index}
@@ -76,6 +76,6 @@ do
 	--reservation-affinity=any \
 	--provisioning-model=SPOT \
 	--preemptible \
-	--metadata-from-file=startup-script=./gcloud/startup_gcloud_vm.sh,shutdown-script=./gcloud/shutdown_gcloud_vm.sh \
+	--metadata-from-file=startup-script=./gcloud/instances/startup_instance.sh,shutdown-script=./gcloud/instances/shutdown_instance.sh \
 	--metadata=batch_index=${batch_index}
 done

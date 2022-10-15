@@ -16,7 +16,7 @@
 #     threads: 1
 #     shell:
 #         """
-#         python -u gcloud/populate_bam_gs_bucket.py \
+#         python -u gcloud/buckets/populate_bam_gs_bucket.py \
 #            --samples_table {params.samples_table} \
 #            --bucket_gs_uri {params.gs_bucket} \
 #            --batch_index {params.batch_index} &> {log}
@@ -70,7 +70,7 @@ rule remove_bams:
     threads: 1
     shell:
         """
-        python -u gcloud/depopulate_bam_gs_bucket.py \
+        python -u gcloud/buckets/depopulate_bam_gs_bucket.py \
            --samples_table config/samples.tsv \
            --bucket_gs_uri {params.gs_bucket} &> {log}
         """

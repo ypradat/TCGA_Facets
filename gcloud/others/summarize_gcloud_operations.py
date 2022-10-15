@@ -166,19 +166,19 @@ def main(args):
     df_table.to_excel(args.operations_table, index=False, float_format="%.3f")
     print("-table saved at %s" % args.operations_table)
 
-    # get total
+    # get total, ignore first 5 batches that were not optimized yet
     n_batches = df_sam["BATCH"].nunique()
-    avg_cost_per_batch_std = df_table.loc[df_table["BATCH"]>=5]["COST_STANDARD"].mean()
-    avg_cost_per_batch_60pct = df_table.loc[df_table["BATCH"]>=5]["COST_PREEMPTIBLE_60PCT_DISCOUNT"].mean()
-    avg_cost_per_batch_91pct = df_table.loc[df_table["BATCH"]>=5]["COST_PREEMPTIBLE_91PCT_DISCOUNT"].mean()
+    avg_cost_per_batch_std = df_table.loc[df_table["BATCH"]>5]["COST_STANDARD"].mean()
+    avg_cost_per_batch_60pct = df_table.loc[df_table["BATCH"]>5]["COST_PREEMPTIBLE_60PCT_DISCOUNT"].mean()
+    avg_cost_per_batch_91pct = df_table.loc[df_table["BATCH"]>5]["COST_PREEMPTIBLE_91PCT_DISCOUNT"].mean()
 
     total_cost_std = n_batches * avg_cost_per_batch_std
     total_cost_60pct = n_batches * avg_cost_per_batch_60pct
     total_cost_91pct = n_batches * avg_cost_per_batch_91pct
     print("POSSIBLE COSTS ARE:")
-    print("\t-STANDARD: $%.3f" % total_cost_std)
-    print("\t-PREEMPTIBLE 60%% DISCOUNT: $%.3f" % total_cost_60pct)
-    print("\t-PREEMPTIBLE 91%% DISCOUNT: $%.3f" % total_cost_91pct)
+    print("\t-STANDARD: $%.2f (avg cost/batch $%.3f)" % (total_cost_std, avg_cost_per_batch_std))
+    print("\t-PREEMPTIBLE 60%% DISCOUNT: $%.2f (avg cost/batch $%.3f)" % (total_cost_60pct, avg_cost_per_batch_60pct))
+    print("\t-PREEMPTIBLE 91%% DISCOUNT: $%.2f (avg cost/batch $%.3f)" % (total_cost_91pct, avg_cost_per_batch_91pct))
 
 
 # run ==================================================================================================================

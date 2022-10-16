@@ -45,6 +45,7 @@ export PATH="/home/ypradat/miniconda3/bin:/home/ypradat/miniconda3/condabin:$PAT
 
 # activate
 source activate /home/ypradat/miniconda3
+conda install -y pandas
 
 # get the code
 git clone https://ypradat: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@github.com/ypradat/FacetsTCGA.git /home/ypradat/FacetsTCGA

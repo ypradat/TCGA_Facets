@@ -1,13 +1,12 @@
 #!/bin/bash
 
-cd /home/ypradat
-
+user=ypradat
 batch_index=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/batch_index -H "Metadata-Flavor: Google")
 zone=$(curl -H Metadata-Flavor:Google http://metadata.google.internal/computeMetadata/v1/instance/zone -s | cut -d/ -f4)
 instance_id=$(gcloud compute instances describe $(hostname) --zone=${zone} --format="get(id)")
 gcloud_log_name=startup-gcloud-vm-${batch_index}
-gcloud_log_vm=/home/ypradat/startup_gcloud_vm_${batch_index}.log
-snakemake_env_dir=/home/ypradat/miniconda3/envs/snakemake
+gcloud_log_vm=/home/${user}/startup_gcloud_vm_${batch_index}.log
+snakemake_env_dir=/home/${user}/miniconda3/envs/snakemake
 
 function join_by {
   local d=${1-} f=${2-}
@@ -16,7 +15,7 @@ function join_by {
   fi
 }
 
-home_content=$(ls /home/ypradat/)
+home_content=$(ls /home/${user}/)
 home_content=$(join_by , $home_content)
 
 # log message
@@ -26,6 +25,11 @@ gcloud logging write ${gcloud_log_name} \
     --severity=INFO
 
 if [[ -f "${gcloud_log_vm}" ]]; then
+    # If the startup log already exists, we hypothesize that the VM was stopped for some reason (e.g preemption). In
+    # this case, we try to restart the snakemake pipeline from where it left off. Of note, if the VM was stopped before
+    # all the tools and dependencies required for the pipeline were installed, the code will simply fail and the VM will
+    # have to be recreated.
+
     exec 3>&1 4>&2 >>${gcloud_log_vm} 2>&1
 
     # log message
@@ -39,10 +43,10 @@ if [[ -f "${gcloud_log_vm}" ]]; then
     printf "\nStart date and time after preemption: %s %s\n" "$now_date" "$now_time"
 
     # set the path in order to find the conda command
-    export PATH="/home/ypradat/miniconda3/bin:/home/ypradat/miniconda3/condabin:$PATH"
+    export PATH="/home/${user}/miniconda3/bin:/home/${user}/miniconda3/condabin:$PATH"
 
     # activate snakemake and run
-    cd /home/ypradat/FacetsTCGA
+    cd /home/${user}/FacetsTCGA
     source activate ${snakemake_env_dir}
 
     # run the pipeline, rerunning incomplete jobs
@@ -60,10 +64,22 @@ if [[ -f "${gcloud_log_vm}" ]]; then
     now_time="$(date +'%T')"
     printf "\nEnd date and time: %s %s\n" "$now_date" "$now_time"
 
+    # before deleting, check that the log was uploaded to the results folder.
+    # if not, upload it to the failed folder
+    gsutil -q stat gs://facets_tcga_results/logs/gcloud/startup_gcloud_vm_${batch_index}.log
+    status=$?
+
+    if [[ $status != 0 ]]; then
+	gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_${batch_index}.log
+    fi
+
     # delete instance
     gcloud compute instances delete $(hostname) --zone=${zone} --delete-disks=all --quiet
 
 else
+    # First startup of the VM, we install all tools and dependencies required for the pipeline before downloading the
+    # pipeline and starting it.
+
     exec 3>&1 4>&2 >${gcloud_log_vm} 2>&1
 
     now_date="$(date +'%d/%m/%Y')"
@@ -102,10 +118,11 @@ else
 	--severity=INFO
 
     # install conda and mamba
+    cd /home/${user}
     mkdir -p miniconda3
     wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3/miniconda.sh
     bash miniconda3/miniconda.sh -b -u -p miniconda3
-    rm -rf /home/ypradat/miniconda3/miniconda.sh
+    rm -rf /home/${user}/miniconda3/miniconda.sh
 
     # log message
     gcloud logging write ${gcloud_log_name} \
@@ -114,7 +131,7 @@ else
 	--severity=INFO
 
     # set the path in order to find the conda command
-    export PATH="/home/ypradat/miniconda3/bin:/home/ypradat/miniconda3/condabin:$PATH"
+    export PATH="/home/${user}/miniconda3/bin:/home/${user}/miniconda3/condabin:$PATH"
 
     # log message
     gcloud logging write ${gcloud_log_name} \
@@ -123,7 +140,7 @@ else
 	--severity=INFO
 
     # install mamba
-    source activate /home/ypradat/miniconda3
+    source activate /home/${user}/miniconda3
     conda install -y -c conda-forge mamba
 
     # log message
@@ -141,7 +158,7 @@ else
     fi
 
     # get the code
-    git clone https://ypradat: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@github.com/ypradat/FacetsTCGA.git /home/ypradat/FacetsTCGA
+    git clone https://ypradat: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@github.com/ypradat/FacetsTCGA.git /home/${user}/FacetsTCGA
 
     # log message
     gcloud logging write ${gcloud_log_name} \
@@ -150,7 +167,7 @@ else
 	--severity=INFO
 
     # get resources and external
-    cd /home/ypradat/FacetsTCGA
+    cd /home/${user}/FacetsTCGA
     gsutil -m cp -r gs://facets_tcga/external .
     gsutil -m cp -r gs://facets_tcga/resources .
 
@@ -190,7 +207,7 @@ else
 	--severity=INFO
 
     # set permissions to user
-    sudo chown -R ypradat /home/ypradat
+    sudo chown -R ${user} /home/${user}
 
     # log message
     gcloud logging write ${gcloud_log_name} \
@@ -211,6 +228,15 @@ else
     now_date="$(date +'%d/%m/%Y')"
     now_time="$(date +'%T')"
     printf "\nEnd date and time: %s %s\n" "$now_date" "$now_time"
+
+    # before deleting, check that the log was uploaded to the results folder.
+    # if not, upload it to the failed folder
+    gsutil -q stat gs://facets_tcga_results/logs/gcloud/startup_gcloud_vm_${batch_index}.log
+    status=$?
+
+    if [[ $status != 0 ]]; then
+	gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_${batch_index}.log
+    fi
 
     # delete instance
     gcloud compute instances delete $(hostname) --zone=${zone} --delete-disks=all --quiet

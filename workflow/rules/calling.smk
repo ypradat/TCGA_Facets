@@ -15,14 +15,15 @@ rule somatic_cnv_facets_tumor_normal:
         tbam="%s/mapping/{tsample}.bam" % R_FOLDER,
         tbai="%s/mapping/{tsample}.bai" % R_FOLDER,
         nbam="%s/mapping/{nsample}.bam" % R_FOLDER,
-        nbai="%s/mapping/{nsample}.bai" % R_FOLDER
+        nbai="%s/mapping/{nsample}.bai" % R_FOLDER,
+        env="%s/setup_main.done" % L_FOLDER
     output:
         vcf="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.vcf.gz" % R_FOLDER,
         tbi="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.vcf.gz.tbi" % R_FOLDER,
         png="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.cnv.png" % R_FOLDER,
         cov="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.cov.pdf" % R_FOLDER,
         spider="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.spider.pdf" % R_FOLDER,
-        pileup=temp("%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER)
+        pileup="%s/calling/somatic_cnv_facets_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER
     benchmark:
         "%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.tsv" % B_FOLDER
     log:
@@ -44,7 +45,7 @@ rule somatic_cnv_facets_tumor_normal:
         load=get_load_facets
     shell:
         """
-        cnv_facets.R \
+        Rscript external/cnv_facets/bin/cnv_facets.R \
             -vcf {input.vcf} \
             -t {input.tbam} \
             -n {input.nbam} \

@@ -1,5 +1,5 @@
-# @created: 01 Dec 21
-# @modified: 06 Oct 22
+# @created: 06 Oct 22
+# @modified: 18 Oct 22
 # @uthor: Yoann Pradat
 #
 # This pipeline runs FACETS and downstream tools for analysing SCNAs in exome-sequencing data from TCGA. 
@@ -15,6 +15,8 @@ rule all:
         # +++++++++++++++++++++++
         # expand("%s/mapping/{sample}.bam" % R_FOLDER, sample=samples),
         # expand("%s/mapping/{sample}.bai" % R_FOLDER, sample=samples),
+        # expand(snp_pileup="%s/calling/somatic_snp_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER,
+        #        get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
         # +++++++++++++++++++++++
         # ## SOMATIC CNV
         # +++++++++++++++++++++++

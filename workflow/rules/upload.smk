@@ -30,7 +30,7 @@ rule upload_results:
         time_min=30
     threads: 2
     params:
-        gs_bucket = "gs://facets_tcga_results"
+        gs_bucket = config["gcloud"]["gs_res_bucket"]
     shell:
         """
         python -u gcloud/buckets/populate_results_gs_bucket.py \

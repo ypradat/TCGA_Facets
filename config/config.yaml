@@ -1,6 +1,10 @@
 samples: config/samples.tsv
 tumor_normal_pairs: config/tumor_normal_pairs.tsv
 
+gcloud:
+  gs_bam_bucket: "gs://tcga_wxs_bam"
+  gs_res_bucket: "gs://facets_tcga_results"
+
 params:
     civic:
         code_dir: external/CivicAnnotator

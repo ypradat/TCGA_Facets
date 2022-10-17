@@ -22,7 +22,7 @@ rule somatic_ppy_aggregate:
         time_min=15
     shell:
         """
-        python -u workflow/scripts/07.4_concatenate_ppy.py \
+        python -u workflow/scripts/04.3_concatenate_ppy.py \
             --input {input} \
             --output {output} &> {log}
         """
@@ -54,7 +54,7 @@ rule somatic_cna_filters_aggregate:
         time_min=60
     shell:
         """
-        python -u workflow/scripts/07.5_concatenate_somatic_cnv.py \
+        python -u workflow/scripts/04.4_concatenate_somatic_cnv.py \
             --cnv {input} \
             --threshold {params.threshold} \
             --output {output} &> {log}
@@ -83,7 +83,7 @@ rule somatic_cna_aggregate:
         time_min=60
     shell:
         """
-        python -u workflow/scripts/07.5_concatenate_somatic_cnv.py \
+        python -u workflow/scripts/04.4_concatenate_somatic_cnv.py \
             --cnv {input} \
             --threshold {params.threshold} \
             --output {output} &> {log}
@@ -97,9 +97,9 @@ rule somatic_cna_sum_aggregate:
     output:
         "%s/aggregate/somatic_cna/somatic_calls_summary_statistics.tsv.gz" % R_FOLDER
     benchmark:
-        "%s/aggregate/somatic_cna_sum/all_samples.tsv" % B_FOLDER
+        "%s/aggregate/somatic_cna/somatic_cna_sum_aggregate.tsv" % B_FOLDER
     log:
-        "%s/aggregate/somatic_cna_sum/all_samples.log" % L_FOLDER
+        "%s/aggregate/somatic_cna/somatic_cna_sum_aggregate.log" % L_FOLDER
     conda:
         "../envs/python.yaml"
     threads: 1
@@ -109,7 +109,7 @@ rule somatic_cna_sum_aggregate:
         time_min=60
     shell:
         """
-        python -u workflow/scripts/07.1_concatenate_tables.py \
+        python -u workflow/scripts/04.1_concatenate_tables.py \
             --input {input} \
             --output {output} &> {log}
         """
@@ -126,9 +126,9 @@ rule somatic_cna_chr_arm_aggregate:
     output:
         "%s/aggregate/somatic_cna/somatic_calls_per_chr_arm.tsv.gz" % R_FOLDER
     benchmark:
-        "%s/aggregate/somatic_cna_chr_arm/all_samples.tsv" % B_FOLDER
+        "%s/aggregate/somatic_cna/somatic_cna_chr_arm_aggregate.tsv" % B_FOLDER
     log:
-        "%s/aggregate/somatic_cna_chr_arm/all_samples.log" % L_FOLDER
+        "%s/aggregate/somatic_cna/somatic_cna_chr_arm_aggregate.log" % L_FOLDER
     conda:
         "../envs/python.yaml"
     threads: 1
@@ -138,7 +138,7 @@ rule somatic_cna_chr_arm_aggregate:
         time_min=60
     shell:
         """
-        python -u workflow/scripts/07.6_concatenate_somatic_cnv_chr_arm.py \
+        python -u workflow/scripts/04.5_concatenate_somatic_cnv_chr_arm.py \
             --input_chr_arm {input.chr_arm} \
             --input_cnv_sum {input.cnv_sum} \
             --input_cln {input.cln} \
@@ -165,7 +165,7 @@ rule somatic_cna_oncokb_aggregate:
         time_min=60
     shell:
         """
-        python -u workflow/scripts/07.1_concatenate_tables.py \
+        python -u workflow/scripts/04.1_concatenate_tables.py \
             --input {input} \
             --output {output} &> {log}
         """
@@ -191,7 +191,7 @@ rule somatic_cna_civic_aggregate:
         time_min=60
     shell:
         """
-        python -u workflow/scripts/07.1_concatenate_tables.py \
+        python -u workflow/scripts/04.1_concatenate_tables.py \
             --input {input} \
             --output {output} &> {log}
         """
@@ -217,7 +217,7 @@ rule somatic_cna_union_ann:
     threads: 1
     shell:
         """
-        python -u workflow/scripts/07.2_concatenate_annotations.py \
+        python -u workflow/scripts/04.2_concatenate_annotations.py \
             --civ {input.civ} \
             --okb {input.okb} \
             --cat cna \

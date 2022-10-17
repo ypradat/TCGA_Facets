@@ -12,18 +12,15 @@ rule somatic_cnv_facets_tumor_normal:
         nsample = "|".join([re.escape(x) for x in nsamples])
     input:
         vcf=config["params"]["gatk"]["known_sites"],
-        tbam="%s/mapping/{tsample}.bam" % R_FOLDER,
-        tbai="%s/mapping/{tsample}.bai" % R_FOLDER,
-        nbam="%s/mapping/{nsample}.bam" % R_FOLDER,
-        nbai="%s/mapping/{nsample}.bai" % R_FOLDER,
+        snp_pileup="%s/calling/somatic_snp_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER,
+        nbhd_snp="%s/calling/somatic_nbhd_snp/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
         env="%s/setup_main.done" % L_FOLDER
     output:
         vcf="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.vcf.gz" % R_FOLDER,
         tbi="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.vcf.gz.tbi" % R_FOLDER,
         png="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.cnv.png" % R_FOLDER,
         cov="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.cov.pdf" % R_FOLDER,
-        spider="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.spider.pdf" % R_FOLDER,
-        pileup="%s/calling/somatic_cnv_facets_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER
+        spider="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.spider.pdf" % R_FOLDER
     benchmark:
         "%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.tsv" % B_FOLDER
     log:
@@ -32,23 +29,22 @@ rule somatic_cnv_facets_tumor_normal:
         "../envs/main.yaml"
     params:
         prefix="{tsample}_vs_{nsample}",
+        nbhd_snp=lambda wildcards, input: pd.read_table(input.nbhd_snp)["nbhd_snp"].get(0),
         cval_pre=config["params"]["cnv"]["facets"]["cvals"]["pre"],
         cval_pro=config["params"]["cnv"]["facets"]["cvals"]["pro"],
-        gbuild=config["params"]["cnv"]["facets"]["gbuild"],
-        dir="%s/calling/somatic_cnv_facets" % R_FOLDER
-    threads:
-        get_threads_facets
+        gbuild=config["params"]["cnv"]["facets"]["gbuild"]
+    threads: 1
     resources:
         queue="shortq",
         mem_mb=28000,
         time_min=90,
-        load=get_load_facets
+        load=get_load_snp_pileup
     shell:
         """
         Rscript external/cnv_facets/bin/cnv_facets.R \
             -vcf {input.vcf} \
-            -t {input.tbam} \
-            -n {input.nbam} \
+            -p {input.snp_pileup} \
+            -snp {params.nbhd_snp} \
             -o {params.prefix} \
             -N {threads} \
             --gbuild {params.gbuild} \
@@ -57,8 +53,7 @@ rule somatic_cnv_facets_tumor_normal:
         mv {wildcards.tsample}_vs_{wildcards.nsample}.vcf.gz.tbi {output.tbi} && \
         mv {wildcards.tsample}_vs_{wildcards.nsample}.cnv.png {output.png} && \
         mv {wildcards.tsample}_vs_{wildcards.nsample}.cov.pdf {output.cov} && \
-        mv {wildcards.tsample}_vs_{wildcards.nsample}.spider.pdf {output.spider} && \
-        mv {wildcards.tsample}_vs_{wildcards.nsample}.csv.gz {output.pileup}
+        mv {wildcards.tsample}_vs_{wildcards.nsample}.spider.pdf {output.spider}
 	"""
 
 
@@ -84,7 +79,7 @@ rule somatic_cnv_table:
         load=1
     shell:
         """
-        python -u workflow/scripts/06.1_cnv_vcf_to_table.py \
+        python -u workflow/scripts/02.1_cnv_vcf_to_table.py \
             --input {input} \
             --gender {params.gender} \
             --output {output} &> {log}
@@ -112,7 +107,7 @@ rule somatic_cnv_bed:
         load=1
     shell:
         """
-        python -u workflow/scripts/06.2_cnv_table_to_bed.py \
+        python -u workflow/scripts/02.2_cnv_table_to_bed.py \
             --input_tab {input.tab} \
             --input_bed {input.bed} \
             --output {output} &> {log}
@@ -144,7 +139,7 @@ rule somatic_cnv_chr_arm_sum:
         load=1
     shell:
         """
-        Rscript workflow/scripts/06.3_cnv_chr_arm_sum.R \
+        Rscript workflow/scripts/02.3_cnv_chr_arm_sum.R \
             --input_tab {input.tab} \
             --input_vcf {input.vcf} \
             --genome {params.genome} \
@@ -176,7 +171,7 @@ rule somatic_cnv_calls:
         load=1
     shell:
         """
-        python -u workflow/scripts/06.4_cnv_filter_calls.py \
+        python -u workflow/scripts/02.4_cnv_filter_calls.py \
             --input_bed {input} \
             --threshold {params.threshold} \
             --output {output} &> {log}

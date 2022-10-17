@@ -78,14 +78,15 @@ def get_input_concatenate(w, typ, db):
         return ["%s/%s.tsv" % (input_folder, sample_pair) for sample_pair in sample_pairs]
 
 
-def get_load_facets(wildcards):
+def get_load_snp_pileup(wildcards):
     df_tnp = pd.read_table(config["tumor_normal_pairs"])
     dna_p = "%s_vs_%s" % (wildcards.tsample, wildcards.nsample)
     size_dna_p = df_tnp.loc[df_tnp["DNA_P"]==dna_p, "File_Size_P"].iloc[0]
 
-    # assume a total available load of 100
-    # assume a pair file size below 50 gb will consume less than 16 gb RAM, allow to run 4 pairs in parallel
-    # assume a pair file size below 100gb should run alone
+    # assume a total available load of 115
+    # assume a pair file size below 50 gb will consume less than 12 gb RAM, allow to run 5 pairs in parallel
+    # assume a pair file size below 100gb will consume less than 20 gb RAM, allow to run 3 pairs in parallel
+    # assume a pair file size above 100gb will consume less than 30 gb RAM, allow to run 2 pairs in parallel
     if size_dna_p >= 100:
         load = 50
     elif size_dna_p >= 50:
@@ -96,9 +97,9 @@ def get_load_facets(wildcards):
     return load
 
 
-def get_threads_facets(wildcards):
+def get_threads_snp_pileup(wildcards):
     n_tnp = pd.read_table(config["tumor_normal_pairs"]).shape[0]
-    load = get_load_facets(wildcards)
+    load = get_load_snp_pileup(wildcards)
 
     if load==50:
         threads = 8

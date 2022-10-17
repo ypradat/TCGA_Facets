@@ -201,7 +201,7 @@ fi
 # create env for running snakemake
 if [[ ! -d "${snakemake_env_dir}" ]]
 then
-    mamba env create --prefix ${snakemake_env_dir} -f workflow/envs/snakemake.yaml
+    mamba env create --prefix ${snakemake_env_dir} -f /home/${user}/FacetsTCGA/workflow/envs/snakemake.yaml
 
     # log message
     if [[ -d "${snakemake_env_dir}" ]]; then

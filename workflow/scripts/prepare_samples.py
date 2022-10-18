@@ -164,7 +164,7 @@ if __name__ == "__main__":
     parser.add_argument("--out_tnp", type=str, help="Path to table of tumor/normal pairs.",
                         default="config/tumor_normal_pairs.all.tsv")
     parser.add_argument("--max_batch_size", type=int, help="Max number of tumor/normal pairs for one batch.",
-                        default=4)
+                        default=5)
     args = parser.parse_args()
 
     main(args)

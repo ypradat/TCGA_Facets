@@ -184,7 +184,8 @@ This script will, for each batch:
 2. spawn a VM instance with sufficient disk space and RAM for the batch.
 3. install the dependencies on the VM and execute the snakemake pipeline.
 4. upload the results, logs, and benchmarks from the VM instance to the bucket `gs://facets_tcga_results`.
-5. shudown the VM instance.
+5. remove the TCGA BAM files from `gs://tcga_wxs_bam`.
+6. shudown the VM instance.
 
 In order to maximize cost-effectiveness, the VMs are preemptible. As a consequence, Google may reclaim the resources of
 a running VM instance at any time, thereby interrupting the pipeline. Fortunately, the VM instance may be restarted any

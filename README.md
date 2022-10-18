@@ -167,3 +167,40 @@ total                                 57              1              4
 
 This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
 ```
+
+# Google compute engine
+
+All the scripts that allow interacting with the Google Compute Engine environment are located in the `glcoud` folder. In
+order to execute the pipeline for all batches defined in the data files `config/samples.all.tsv` and
+`config/tumor_normal_pairs.all.tsv` you may run the main script
+
+```
+bash gcloud/instances/run_instances.sh -a 1 -b -1
+```
+
+This script will, for each batch:
+
+1. copy the TCGA BAM files to the google storage bucket `gs://tcga_wxs_bam`.
+2. spawn a VM instance with sufficient disk space and RAM for the batch.
+3. install the dependencies on the VM and execute the snakemake pipeline.
+4. upload the results, logs, and benchmarks from the VM instance to the bucket `gs://facets_tcga_results`.
+5. shudown the VM instance.
+
+In order to maximize cost-effectiveness, the VMs are preemptible. As a consequence, Google may reclaim the resources of
+a running VM instance at any time, thereby interrupting the pipeline. Fortunately, the VM instance may be restarted any
+time after it was preempted and the following command will indefinitely check periodically (every 900s in the example
+command) for instances that have been soon preempted and restart them
+
+```
+bash gcloud/instances/check_instances.sh -f 900
+```
+
+The bash scripts above may be run from your local computer. However, the scripts will be interrupted in case your
+computer shuts down or lose internet connection. In order to avoid this issues, you may start a "master" VM instance
+via
+
+```
+bash gcloud/instances/run_main_instance.sh
+```
+
+and run the bash scripts above from within this instance.

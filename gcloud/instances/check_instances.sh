@@ -41,7 +41,6 @@ do
 	    gcloud compute instances start ${instance_terminated}  \
                 --project=isb-cgc-external-001 \
                 --zone=us-central1-a
-	    printf -- "  restarted instance %s\n" "${instance_terminated}"
 	done
     fi
 

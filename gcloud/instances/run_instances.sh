@@ -19,7 +19,7 @@ while getopts ":a:b:" opt; do
 done
 
 
-# generate list of batch indices between batch_beg and batch_end removing
+# generate list of batch indices between batch_min and batch_max and remove from this list
 # indices already processed.
 batch_list=gcloud/batch_indices.txt
 python -u gcloud/others/generate_batch_indices.py \

@@ -14,7 +14,7 @@ rule download_bam:
         vm_folder = "%s/mapping" % R_FOLDER,
         l_folder = L_FOLDER
     output:
-        touch("%s/download_bam_{sample}.done" % L_FOLDER)
+        touch("%s/mapping/download_bam_{sample}.done" % L_FOLDER)
     resources:
         mem_mb=1000,
         time_min=120,
@@ -38,8 +38,8 @@ rule get_snp_pileup:
         "../envs/main.yaml"
     input:
         table = config["samples"],
-        download_tbam="%s/download_bam_{tsample}.done" % L_FOLDER,
-        download_nbam="%s/download_bam_{nsample}.done" % L_FOLDER,
+        download_tbam="%s/mapping/download_bam_{tsample}.done" % L_FOLDER,
+        download_nbam="%s/mapping/download_bam_{nsample}.done" % L_FOLDER,
     output:
         snp_pileup="%s/calling/somatic_snp_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER,
         nbhd_snp="%s/calling/somatic_nbhd_snp/{tsample}_vs_{nsample}.tsv" % R_FOLDER

@@ -141,22 +141,29 @@ snakemake -s workflow/Snakefile --profile slurm -n
 and the summary of the jobs that will be run
 
 ``` 
+This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
 Job stats:
 job                                count    min threads    max threads
 -------------------------------  -------  -------------  -------------
 all                                    1              1              1
-somatic_cna_civic                      2              1              1
-somatic_cna_civic_filter               2              1              1
-somatic_cna_civic_preprocess           2              1              1
-somatic_cna_oncokb                     2              1              1
-somatic_cna_oncokb_filter              2              1              1
-somatic_cna_oncokb_preprocess          2              1              1
-somatic_cnv_bed                        2              1              1
-somatic_cnv_calls                      2              1              1
-somatic_cnv_chr_arm_sum                2              1              1
-somatic_cnv_facets_tumor_normal        2             10             10
-somatic_cnv_table                      2              1              1
-total                                 23              1             10
+download_bam                           4              1              1
+get_snp_pileup                         4              4              4
+remove_bams                            1              1              1
+setup_main                             1              1              1
+setup_r                                1              1              1
+somatic_cna_civic                      4              1              1
+somatic_cna_civic_filter               4              1              1
+somatic_cna_civic_preprocess           4              1              1
+somatic_cna_oncokb                     4              1              1
+somatic_cna_oncokb_filter              4              1              1
+somatic_cna_oncokb_preprocess          4              1              1
+somatic_cnv_bed                        4              1              1
+somatic_cnv_calls                      4              1              1
+somatic_cnv_chr_arm_sum                4              1              1
+somatic_cnv_facets_tumor_normal        4              1              1
+somatic_cnv_table                      4              1              1
+upload_results                         1              2              2
+total                                 57              1              4
 
 This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
 ```

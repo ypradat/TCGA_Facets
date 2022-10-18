@@ -23,6 +23,9 @@ own environment using the file `workflow/envs/snakemake.yaml` through the comman
 conda env create -f workflow/envs/snakemake.yaml
 ```
 
+If you are running the pipeline via Google Compute Engine VM instances, all the dependencies and conda environments are
+automatically installed.
+
 ## Data requirements
 
 ### config
@@ -135,7 +138,7 @@ Here is the graph of the workflow
 The command ran is
 
 ```
-snakemake -s workflow/Snakefile --profile slurm -n
+snakemake -s workflow/Snakefile --profile ./profile -n
 ```
 
 and the summary of the jobs that will be run

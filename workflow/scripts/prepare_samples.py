@@ -92,7 +92,7 @@ def main(args):
 
         return cum_batch_size, cum_file_size
 
-    i_batch = 2
+    i_batch = 1
     cum_batch_size = 0
     cum_file_size = 0
     r_tnp_batches = []

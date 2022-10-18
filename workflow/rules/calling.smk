@@ -8,8 +8,8 @@
 # Tumor-normal mode
 rule somatic_cnv_facets_tumor_normal:
     wildcard_constraints:
-        tsample = "|".join([re.escape(x) for x in tsamples]),
-        nsample = "|".join([re.escape(x) for x in nsamples])
+        tsample="|".join([re.escape(x) for x in tsamples]),
+        nsample="|".join([re.escape(x) for x in nsamples])
     input:
         vcf=config["params"]["gatk"]["known_sites"],
         snp_pileup="%s/calling/somatic_snp_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER,
@@ -71,7 +71,7 @@ rule somatic_cnv_table:
         "../envs/python.yaml"
     threads: 1
     params:
-        gender = lambda w: get_column_table_sample(w, "Gender")
+        gender=lambda w: get_column_table_sample(w, "Gender")
     resources:
         queue="shortq",
         mem_mb=2000,

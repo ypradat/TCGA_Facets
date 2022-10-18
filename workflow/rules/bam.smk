@@ -7,12 +7,11 @@ rule download_bam:
     benchmark:
         "%s/mapping/gdc_get_bam_{sample}.tsv" % B_FOLDER
     input:
-        table = config["samples"],
-        # done = "%s/add_bams.done" % L_FOLDER
+        table=config["samples"]
     params:
-        gs_bucket = "gs://tcga_wxs_bam",
-        vm_folder = "%s/mapping" % R_FOLDER,
-        l_folder = L_FOLDER
+        gs_bucket="gs://tcga_wxs_bam",
+        vm_folder="%s/mapping" % R_FOLDER,
+        l_folder=L_FOLDER
     output:
         touch("%s/mapping/download_bam_{sample}.done" % L_FOLDER)
     resources:
@@ -37,16 +36,17 @@ rule get_snp_pileup:
     conda:
         "../envs/main.yaml"
     input:
-        table = config["samples"],
+        table=config["samples"],
+        snp_vcf=config["params"]["gatk"]["known_sites"],
         download_tbam="%s/mapping/download_bam_{tsample}.done" % L_FOLDER,
         download_nbam="%s/mapping/download_bam_{nsample}.done" % L_FOLDER,
     output:
         snp_pileup="%s/calling/somatic_snp_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER,
         nbhd_snp="%s/calling/somatic_nbhd_snp/{tsample}_vs_{nsample}.tsv" % R_FOLDER
     params:
-        gs_bam_bucket = config["gcloud"]["gs_bam_bucket"],
-        gs_snp_bucket = config["gcloud"]["gs_res_bucket"],
-        vm_res_folder = R_FOLDER
+        gs_bam_bucket=config["gcloud"]["gs_bam_bucket"],
+        gs_snp_bucket=config["gcloud"]["gs_res_bucket"],
+        vm_res_folder=R_FOLDER
     threads:
         get_threads_snp_pileup
     resources:
@@ -62,6 +62,7 @@ rule get_snp_pileup:
             -r {params.vm_res_folder} \
             -t {wildcards.tsample} \
             -n {wildcards.nsample} \
+            -v {input.snp_vcf} \
             -p {threads} &> {log}
         """
 
@@ -78,7 +79,7 @@ rule remove_bams:
     output:
         touch("%s/remove_bams.done" % L_FOLDER)
     params:
-        gs_bucket = config["gcloud"]["gs_bam_bucket"]
+        gs_bucket=config["gcloud"]["gs_bam_bucket"]
     threads: 1
     resources:
         mem_mb=1000,

@@ -62,6 +62,8 @@ parser$add_argument('--out-nbhd-snp', '-on', help= 'Output path for snp-pileup f
 parser$add_argument('--snp-tumour', '-t', help= 'BAM file for tumour sample', required= FALSE)
 parser$add_argument('--snp-normal', '-n', help= 'BAM file for normal sample', required= FALSE)
 
+parser$add_argument('--snp-vcf', '-vcf', help= 'VCF file of SNPs where pileup is to be computed', required= FALSE)
+
 def<- 5
 parser$add_argument('--snp-mapq', '-mq', help= sprintf(
 'Sets the minimum threshold for mapping quality. Default %s', def), required= FALSE, default= def, type= 'integer')

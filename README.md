@@ -190,14 +190,14 @@ This script will, for each batch:
 In order to maximize cost-effectiveness, the VMs are preemptible. As a consequence, Google may reclaim the resources of
 a running VM instance at any time, thereby interrupting the pipeline. Fortunately, the VM instance may be restarted any
 time after it was preempted and the following command will indefinitely check periodically (every 900s in the example
-command) for instances that have been soon preempted and restart them
+command) for instances that have been preempted and restart them
 
 ```
 bash gcloud/instances/check_instances.sh -f 900
 ```
 
 The bash scripts above may be run from your local computer. However, the scripts will be interrupted in case your
-computer shuts down or lose internet connection. In order to avoid this issues, you may start a "master" VM instance
+computer shuts down or loses internet connection. In order to avoid these issues, you may start a "master" VM instance
 via
 
 ```

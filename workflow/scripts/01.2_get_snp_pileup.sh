@@ -30,9 +30,9 @@ done
 
 snp_pileup=${tsample}_vs_${nsample}.csv.gz
 nbhd_snp=${tsample}_vs_${nsample}.tsv
-gs_snp_pileup=${gs_snp_bucket}/calling/somatic_snp_pileup/${snp_pileup}
+gs_snp_pileup=${gs_snp_bucket}/results/calling/somatic_snp_pileup/${snp_pileup}
 vm_snp_pileup=${vm_res_folder}/calling/somatic_snp_pileup/${snp_pileup}
-gs_nbhd_snp=${gs_snp_bucket}/calling/somatic_nbhd_snp/${nbhd_snp}
+gs_nbhd_snp=${gs_snp_bucket}/results/calling/somatic_nbhd_snp/${nbhd_snp}
 vm_nbhd_snp=${vm_res_folder}/calling/somatic_nbhd_snp/${nbhd_snp}
 gsutil -q stat ${gs_snp_pileup}
 status=$?

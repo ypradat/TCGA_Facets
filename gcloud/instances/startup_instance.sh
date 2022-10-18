@@ -135,6 +135,9 @@ then
 	'{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "gsutil cp resources done."}' \
 	--payload-type=json \
 	--severity=INFO
+
+    # in order to suppress warning message from snp-pileup
+    touch resources/hg38_gatk/*.tbi
 fi
 
 

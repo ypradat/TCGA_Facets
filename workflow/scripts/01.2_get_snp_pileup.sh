@@ -36,9 +36,10 @@ gsutil -q stat ${gs_snp_pileup}
 status=$?
 
 mkdir -p ${vm_res_folder}/calling/somatic_snp_pileup
+mkdir -p ${vm_res_folder}/calling/somatic_nbhd_snp
 
 if [[ $status != 0 ]]; then
-    printf "snp-pileup file %s not found, download the bam files and then create the pileup file\n" "${snp_pileup}"
+    printf -- "-INFO: snp-pileup file %s not found, create it from the BAM files\n" "${snp_pileup}"
 
     gs_tbam_file=${gs_bam_bucket}/${tsample}.bam
     gs_tbai_file=${gs_bam_bucket}/${tsample}.bai
@@ -51,24 +52,34 @@ if [[ $status != 0 ]]; then
     vm_nbai_file=${vm_res_folder}/mapping/${nsample}.bai
 
     if [[ ! -f "${vm_tbam_file}" ]]; then
-	printf "copying file %s to the VM..." "${gs_tbam_file}"
+	printf "  copying file %s to the VM..." "${gs_tbam_file}"
 	gsutil cp ${gs_tbam_file} ${vm_tbam_file}
+    else
+	printf "  BAM file %s already exists..." "${vm_tbam_file}"
     fi
 
     if [[ ! -f "${vm_tbai_file}" ]]; then
-	printf "copying file %s to the VM..." "${gs_tbai_file}"
+	printf "  copying file %s to the VM..." "${gs_tbai_file}"
 	gsutil cp ${gs_tbai_file} ${vm_tbai_file}
+    else
+	printf "  BAM index file %s already exists..." "${vm_tbai_file}"
     fi
 
     if [[ ! -f "${vm_nbam_file}" ]]; then
-	printf "copying file %s to the VM..." "${gs_nbam_file}"
+	printf "  copying file %s to the VM..." "${gs_nbam_file}"
 	gsutil cp ${gs_nbam_file} ${vm_nbam_file}
+    else
+	printf "  BAM file %s already exists..." "${vm_nbam_file}"
     fi
 
     if [[ ! -f "${vm_nbai_file}" ]]; then
-	printf "copying file %s to the VM..." "${gs_nbai_file}"
+	printf "  copying file %s to the VM..." "${gs_nbai_file}"
 	gsutil cp ${gs_nbai_file} ${vm_nbai_file}
+    else
+	printf "  BAM index file %s already exists..." "${vm_nbai_file}"
     fi
+
+    printf -- "-INFO: running Rscript 01.2_get_snp_pileup.R...\n"
 
     Rscript workflow/scripts/01.2_get_snp_pileup.R \
 	-t ${vm_tbam_file} \
@@ -77,10 +88,15 @@ if [[ $status != 0 ]]; then
 	-on ${vm_nbhd_snp} \
 	-N ${threads}
 
+    printf -- "-INFO: saving %s to the google bucket...\n" "${vm_snp_pileup}"
     gsutil cp ${vm_snp_pileup} ${gs_snp_pileup}
+
+    printf -- "-INFO: saving %s to the google bucket...\n" "${vm_nbhd_snp}"
     gsutil cp ${vm_nbhd_snp} ${gs_nbhd_snp}
 else
-    printf "snp-pileup file %s found, copy it to the VM\n" "${snp_pileup}"
+    printf "-INFO: snp-pileup file %s found, copy it to the VM\n" "${snp_pileup}"
     gsutil cp ${gs_snp_pileup} ${vm_snp_pileup}
+
+    printf "-INFO: nbhd-snp file %s found, copy it to the VM\n" "${nbhd_snp}"
     gsutil cp ${gs_nbhd_snp} ${vm_nbhd_snp}
 fi

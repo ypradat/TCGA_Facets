@@ -25,7 +25,7 @@ done
 gs_bam_file=${gs_bam_bucket}/${sample}.bam
 gs_bai_file=${gs_bam_bucket}/${sample}.bai
 
-gs_snp_pileup=${gs_snp_bucket}/results/calling/somatic_snp_pileup/*${sample}*
+gs_snp_pileup=${gs_res_bucket}/results/calling/somatic_snp_pileup/*${sample}*
 gsutil ls ${gs_snp_pileup}
 status=$?
 

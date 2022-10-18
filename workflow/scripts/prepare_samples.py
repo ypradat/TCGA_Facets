@@ -72,22 +72,12 @@ def main(args):
     # sort so that batch indices do not change from one run to another
     df_tnp = df_tnp.sort_values(by="DNA_P")
 
-    # create batches
-    # some pairs were already processed during tests
-    dna_p_batch_1 = ["TCGA-05-4244-01A-01D-1105-08_vs_TCGA-05-4244-10A-01D-1105-08",
-                     "TCGA-05-4415-01A-22D-1855-08_vs_TCGA-05-4415-10A-01D-1855-08",
-                     "TCGA-02-0003-01A-01D-1490-08_vs_TCGA-02-0003-10A-01D-1490-08",
-                     "TCGA-FZ-5920-01A-11D-1609-08_vs_TCGA-FZ-5920-11A-01D-1609-08"]
-    df_tnp_a = df_tnp.loc[df_tnp["DNA_P"].isin(dna_p_batch_1)].copy()
-    df_tnp_a["Batch"] = 1
-
     # create batches iteratively
     # constraint: batch sizes should not exceed 4 except in the case below.
     # constraint: one BAM file may belong to one batch only. Therefore, all BAM files involved in pairs sharing at least
     #   one BAM file must belong the same batch. This rule may be simplified by grouping together all pairs from the
     #   same subject.
-    df_tnp_b = df_tnp.loc[~df_tnp["DNA_P"].isin(dna_p_batch_1)].copy()
-    df_tnp_b["Batch"] = np.nan
+    df_tnp["Batch"] = np.nan
 
     def add_pairs_from_sub(df_tnp_sub, cum_batch_size, cum_file_size, i_tnp_seen, r_tnp_batches, dry_run=False):
         for i_tnp_sub, (_, r_tnp_sub) in zip(df_tnp_sub.index, df_tnp_sub.iterrows()):
@@ -107,11 +97,11 @@ def main(args):
     cum_file_size = 0
     r_tnp_batches = []
     i_tnp_seen = []
-    for i_tnp, (_, r_tnp) in zip(df_tnp_b.index, df_tnp_b.iterrows()):
+    for i_tnp, (_, r_tnp) in zip(df_tnp.index, df_tnp.iterrows()):
         if i_tnp in i_tnp_seen:
             pass
         else:
-            df_tnp_sub = df_tnp_b.loc[df_tnp_b["Subject_Id"]==r_tnp["Subject_Id"]]
+            df_tnp_sub = df_tnp.loc[df_tnp["Subject_Id"]==r_tnp["Subject_Id"]]
 
             if cum_batch_size==0:
                 #  add all pairs from the suject to the batch
@@ -134,10 +124,8 @@ def main(args):
                     cum_batch_size, cum_file_size = add_pairs_from_sub(df_tnp_sub, cum_batch_size, cum_file_size,
                                                                        i_tnp_seen, r_tnp_batches, dry_run=False)
 
-    df_tnp_b = pd.DataFrame(r_tnp_batches)
-
-    # merge
-    df_tnp = pd.concat((df_tnp_a, df_tnp_b), axis=0)
+    # concatenate
+    df_tnp = pd.DataFrame(r_tnp_batches)
 
     # subselect sam table to consider only samples with matched normal
     df_sam = df_sam.loc[df_sam["Sample_Id"].isin(df_tnp["DNA_T"].tolist()+df_tnp["DNA_N"].tolist())]
@@ -164,7 +152,7 @@ if __name__ == "__main__":
     parser.add_argument("--out_tnp", type=str, help="Path to table of tumor/normal pairs.",
                         default="config/tumor_normal_pairs.all.tsv")
     parser.add_argument("--max_batch_size", type=int, help="Max number of tumor/normal pairs for one batch.",
-                        default=5)
+                        default=4)
     args = parser.parse_args()
 
     main(args)

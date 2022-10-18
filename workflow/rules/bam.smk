@@ -9,8 +9,9 @@ rule download_bam:
     input:
         table=config["samples"]
     params:
-        gs_bucket="gs://tcga_wxs_bam",
-        vm_folder="%s/mapping" % R_FOLDER,
+        gs_bam_bucket=config["gcloud"]["gs_bam_bucket"],
+        gs_res_bucket=config["gcloud"]["gs_res_bucket"],
+        vm_bam_folder="%s/mapping" % R_FOLDER,
         l_folder=L_FOLDER
     output:
         touch("%s/mapping/download_bam_{sample}.done" % L_FOLDER)
@@ -22,8 +23,9 @@ rule download_bam:
     shell:
         """
         bash workflow/scripts/01.1_get_bam.sh \
-            -b {params.gs_bucket} \
-            -d {params.vm_folder} \
+            -a {params.gs_bam_bucket} \
+            -b {params.gs_res_bucket} \
+            -v {params.vm_bam_folder} \
             -s {wildcards.sample} &> {log}
         """
 

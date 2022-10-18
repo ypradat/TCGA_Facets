@@ -34,7 +34,7 @@ gs_snp_pileup=${gs_snp_bucket}/results/calling/somatic_snp_pileup/${snp_pileup}
 vm_snp_pileup=${vm_res_folder}/calling/somatic_snp_pileup/${snp_pileup}
 gs_nbhd_snp=${gs_snp_bucket}/results/calling/somatic_nbhd_snp/${nbhd_snp}
 vm_nbhd_snp=${vm_res_folder}/calling/somatic_nbhd_snp/${nbhd_snp}
-gsutil -q stat ${gs_snp_pileup}
+gsutil ls ${gs_snp_pileup}
 status=$?
 
 mkdir -p ${vm_res_folder}/calling/somatic_snp_pileup

@@ -88,11 +88,11 @@ def get_load_snp_pileup(wildcards):
     # assume a pair file size below 100gb will consume less than 20 gb RAM, allow to run up to 4 pairs in parallel
     # assume a pair file size above 100gb will consume less than 30 gb RAM, allow to run up to 3 pairs in parallel
     if size_dna_p >= 100:
-        load = 35
+        load = 50
     elif size_dna_p >= 50:
-        load = 25
+        load = 30
     else:
-        load = 20
+        load = 25
 
     return load
 
@@ -101,14 +101,12 @@ def get_threads_snp_pileup(wildcards):
     n_tnp = pd.read_table(config["tumor_normal_pairs"]).shape[0]
     load = get_load_snp_pileup(wildcards)
 
-    if load==35:
-        if n_tnp >= 3:
-            threads = 5
-        elif n_tnp == 2:
+    if load==50:
+        if n_tnp >= 2:
             threads = 8
         elif n_tnp == 1:
             threads = 16
-    elif load==25:
+    elif load==30:
         if n_tnp >= 4:
             threads = 4
         elif n_tnp == 3:

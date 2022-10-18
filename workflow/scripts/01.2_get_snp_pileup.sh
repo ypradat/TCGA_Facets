@@ -72,7 +72,7 @@ if [[ $status != 0 ]]; then
 
     Rscript workflow/scripts/01.2_get_snp_pileup.R \
 	-t ${vm_tbam_file} \
-	-n ${vm_nbai_file} \
+	-n ${vm_nbam_file} \
 	-op ${vm_snp_pileup} \
 	-on ${vm_nbhd_snp} \
 	-N ${threads}

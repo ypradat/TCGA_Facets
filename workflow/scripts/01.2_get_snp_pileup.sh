@@ -52,34 +52,35 @@ if [[ $status != 0 ]]; then
     vm_nbai_file=${vm_res_folder}/mapping/${nsample}.bai
 
     if [[ ! -f "${vm_tbam_file}" ]]; then
-	printf "  copying file %s to the VM..." "${gs_tbam_file}"
+	printf "  copying file %s to the VM...\n" "${gs_tbam_file}"
 	gsutil cp ${gs_tbam_file} ${vm_tbam_file}
     else
-	printf "  BAM file %s already exists..." "${vm_tbam_file}"
+	printf "  BAM file %s already exists!\n" "${vm_tbam_file}"
     fi
 
     if [[ ! -f "${vm_tbai_file}" ]]; then
-	printf "  copying file %s to the VM..." "${gs_tbai_file}"
+	printf "  copying file %s to the VM...\n" "${gs_tbai_file}"
 	gsutil cp ${gs_tbai_file} ${vm_tbai_file}
     else
-	printf "  BAM index file %s already exists..." "${vm_tbai_file}"
+	printf "  BAM index file %s already exists!\n" "${vm_tbai_file}"
     fi
 
     if [[ ! -f "${vm_nbam_file}" ]]; then
-	printf "  copying file %s to the VM..." "${gs_nbam_file}"
+	printf "  copying file %s to the VM...\n" "${gs_nbam_file}"
 	gsutil cp ${gs_nbam_file} ${vm_nbam_file}
     else
-	printf "  BAM file %s already exists..." "${vm_nbam_file}"
+	printf "  BAM file %s already exists!\n" "${vm_nbam_file}"
     fi
 
     if [[ ! -f "${vm_nbai_file}" ]]; then
-	printf "  copying file %s to the VM..." "${gs_nbai_file}"
+	printf "  copying file %s to the VM...\n" "${gs_nbai_file}"
 	gsutil cp ${gs_nbai_file} ${vm_nbai_file}
     else
-	printf "  BAM index file %s already exists..." "${vm_nbai_file}"
+	printf "  BAM index file %s already exists!\n" "${vm_nbai_file}"
     fi
 
     printf -- "-INFO: running Rscript 01.2_get_snp_pileup.R...\n"
+    printf -- " path to Rscript command %s\n" "$(which Rscript)"
 
     Rscript workflow/scripts/01.2_get_snp_pileup.R \
 	-t ${vm_tbam_file} \

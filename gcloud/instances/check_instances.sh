@@ -73,7 +73,7 @@ do
     then
         for index_deleted_first in "${indices_deleted_first[@]}"
         do
-            bash gcloud/instances/run_instances.sh -i ${index_deleted_first} -s -n
+            bash gcloud/instances/run_instances.sh -i ${index_deleted_first} -s
         done
     fi
 

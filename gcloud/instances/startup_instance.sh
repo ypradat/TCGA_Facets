@@ -232,10 +232,30 @@ gcloud logging write ${gcloud_log_name} \
     --payload-type=json \
     --severity=INFO
 
+# if the pipeline has already failed for this batch, reduce the load because very often the
+# failure occurs due to memory issues.
+gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_${batch_index}.log
+status_failed=$?
+
+if [[ $status_failed != 0 ]]; then
+    load=115
+else
+    load=65
+
+    # log message
+    gcloud logging write ${gcloud_log_name} \
+	'{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "this batch has already failed: reducing the load to '${load}'."}' \
+	--payload-type=json \
+	--severity=INFO
+
+    # removing existing failed log
+    gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_${batch_index}.log
+fi
+
 # run the pipeline, rerunning incomplete jobs
 cd /home/${user}/FacetsTCGA
-snakemake -s workflow/Snakefile --profile ./profile --resources load=115 --jobs 50 -f --unlock
-snakemake -s workflow/Snakefile --profile ./profile --resources load=115 --jobs 50 -f --rerun-incomplete
+snakemake -s workflow/Snakefile --profile ./profile --resources load=${load} --jobs 50 -f --unlock
+snakemake -s workflow/Snakefile --profile ./profile --resources load=${load} --jobs 50 -f --rerun-incomplete
 
 # log message
 gcloud logging write ${gcloud_log_name} \
@@ -250,10 +270,16 @@ printf "\nEnd date and time: %s %s\n" "$now_date" "$now_time"
 
 # before deleting, check that the log was uploaded to the results folder.
 # if not, upload it to the failed folder
-gsutil -q stat gs://facets_tcga_results/logs/gcloud/startup_gcloud_vm_${batch_index}.log
-status=$?
+gsutil ls gs://facets_tcga_results/logs/gcloud/startup_gcloud_vm_${batch_index}.log
+status_failed=$?
 
-if [[ $status != 0 ]]; then
+if [[ $status_failed != 0 ]]; then
+    # log message
+    gcloud logging write ${gcloud_log_name} \
+	'{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed."}' \
+	--payload-type=json \
+	--severity=WARNING
+
     gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_${batch_index}.log
 fi
 

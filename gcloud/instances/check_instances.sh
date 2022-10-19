@@ -55,7 +55,7 @@ do
 
     printf -- "  %s instance(s) ALIVE/%s instance(s) have failed\n" \
 	"${#instances_alive[@]}" \
-	"$(( ${#indices_deleted_first[@]} + ${#indices_deleted_second[@]} ))"
+	"$(( ${#indices_deleted_first[@]} + ${#indices_deleted_second[@]} + ${#indices_deleted_third[@]} ))"
 
     printf -- "  %s RUNNING/%s TERMINATED/%s FAILED 1st run/%s FAILED 2nd run/%s FAILED 3rd run\n" \
 	"${#instances_running[@]}" \

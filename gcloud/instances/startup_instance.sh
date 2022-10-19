@@ -314,7 +314,7 @@ if [[ ${status_failed_cur} != 0 ]]; then
         gcloud logging write ${gcloud_log_name} \
             '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the second time."}' \
             --payload-type=json \
-            --severity=ERROR
+            --severity=WARNING
 
         gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
     elif [[ ${status_failed_second} == 0 ]]; then

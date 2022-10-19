@@ -226,26 +226,46 @@ source activate ${snakemake_env_dir}
 # set permissions to user
 sudo chown -R ${user} /home/${user}
 
-# if the pipeline has already failed for this batch, reduce the load because very often the
+# if the pipeline has already failed once for this batch, reduce the load because very often the
 # failure occurs due to memory issues.
 gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
-status_failed_pre=$?
+status_failed_first=$?
 
-if [[ ${status_failed_pre} != 0 ]]; then
+# if the pipeline has already failed twice for this batch, reduce to only job at a time to
+# avert memory issues.
+gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
+status_failed_second=$?
+
+if [[ ${status_failed_second} != 0 ]] && [[ ${status_failed_first} != 0 ]]; then
     # first time this batch is run, try to run the maximum number of jobs in parallel
     load=115
-else
+    jobs=50
+elif [[ ${status_failed_first} == 0 ]]; then
     # second time this batch is run, reduce the maximum number of jobs that can run in parallel
     load=65
+    jobs=50
 
     # log message
     gcloud logging write ${gcloud_log_name} \
-	'{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "this batch has already failed: reducing the load to '${load}'."}' \
-	--payload-type=json \
-	--severity=INFO
+        '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "this batch has already failed once, reducing the load to '${load}'."}' \
+        --payload-type=json \
+        --severity=INFO
 
     # removing existing failed log
     gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
+elif [[ ${status_failed_second} == 0 ]]; then
+    # third time this batch is run, reduce the maximum number of jobs that can run in parallel to 1
+    load=65
+    jobs=1
+
+    # log message
+    gcloud logging write ${gcloud_log_name} \
+        '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "this batch has already failed twice, reducing the number of jobs to '${jobs}'."}' \
+        --payload-type=json \
+        --severity=INFO
+
+    # removing existing failed log
+    gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
 fi
 
 # run the pipeline, rerunning incomplete jobs
@@ -257,8 +277,8 @@ gcloud logging write ${gcloud_log_name} \
     --payload-type=json \
     --severity=INFO
 
-snakemake -s workflow/Snakefile --profile ./profile --resources load=${load} --jobs 50 -f --unlock
-snakemake -s workflow/Snakefile --profile ./profile --resources load=${load} --jobs 50 -f --rerun-incomplete
+snakemake -s workflow/Snakefile --profile ./profile --resources load=${load} --jobs ${jobs} -f --unlock
+snakemake -s workflow/Snakefile --profile ./profile --resources load=${load} --jobs ${jobs} -f --rerun-incomplete
 
 # log message
 gcloud logging write ${gcloud_log_name} \
@@ -277,26 +297,36 @@ gsutil ls gs://facets_tcga_results/logs/gcloud/startup_gcloud_vm_${batch_index}.
 status_failed_cur=$?
 
 if [[ ${status_failed_cur} != 0 ]]; then
-    if [[ ${status_failed_pre} != 0 ]]; then
-	# there was no failure log from a previous run of this batch
+    if [[ ${status_failed_first} != 0 ]] && [[ ${status_failed_second} != 0 ]]; then
+        # there was no failure log from a previous run of this batch
 
-	# log message
-	gcloud logging write ${gcloud_log_name} \
-	    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the first time."}' \
-	    --payload-type=json \
-	    --severity=WARNING
+        # log message
+        gcloud logging write ${gcloud_log_name} \
+            '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the first time."}' \
+            --payload-type=json \
+            --severity=WARNING
 
-	gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
-    else
-	# there was a failure log from a previous run of this batch
+        gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
+    elif [[ ${status_failed_first} == 0 ]]; then
+        # there was a failure log after a first run of this batch
 
-	# log message
-	gcloud logging write ${gcloud_log_name} \
-	    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the second time."}' \
-	    --payload-type=json \
-	    --severity=ERROR
+        # log message
+        gcloud logging write ${gcloud_log_name} \
+            '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the second time."}' \
+            --payload-type=json \
+            --severity=ERROR
 
-	gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
+        gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
+    elif [[ ${status_failed_second} == 0 ]]; then
+        # there was a failure log after a second run of this batch
+
+        # log message
+        gcloud logging write ${gcloud_log_name} \
+            '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the third time."}' \
+            --payload-type=json \
+            --severity=ERROR
+
+        gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_third_${batch_index}.log
     fi 
 fi
 

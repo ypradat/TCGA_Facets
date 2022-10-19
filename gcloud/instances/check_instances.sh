@@ -20,7 +20,7 @@ done
 printf -- "-INFO: this script will check for instances that have been terminated/deleted on fail and restart/recreate them every %s seconds\n" "${frequency}"
 
 i=1
-while [[ $i == 1 ]] || [[ ${#instances_alive[@]} != 0 ]] || [[ ${#indices_deleted_first[@]} != 0 ]] 
+while [[ $i == 1 ]] || [[ ${#instances_alive[@]} != 0 ]] || [[ ${#indices_deleted_first[@]} != 0 ]] || [[ ${#indices_deleted_second[@]} != 0 ]]
 do
     printf -- "-CHECK %s\n" "${i}"
 

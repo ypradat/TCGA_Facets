@@ -112,7 +112,7 @@ then
 	--severity=INFO
 fi
 
-# get resources and external
+# get folders resources and external required for running the pipeline
 cd /home/${user}/FacetsTCGA
 
 if [[ ! -d "external" ]]
@@ -226,20 +226,16 @@ source activate ${snakemake_env_dir}
 # set permissions to user
 sudo chown -R ${user} /home/${user}
 
-# log message
-gcloud logging write ${gcloud_log_name} \
-    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "started pipeline."}' \
-    --payload-type=json \
-    --severity=INFO
-
 # if the pipeline has already failed for this batch, reduce the load because very often the
 # failure occurs due to memory issues.
-gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_${batch_index}.log
-status_failed=$?
+gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
+status_failed_pre=$?
 
-if [[ $status_failed != 0 ]]; then
+if [[ ${status_failed_pre} != 0 ]]; then
+    # first time this batch is run, try to run the maximum number of jobs in parallel
     load=115
 else
+    # second time this batch is run, reduce the maximum number of jobs that can run in parallel
     load=65
 
     # log message
@@ -249,11 +245,18 @@ else
 	--severity=INFO
 
     # removing existing failed log
-    gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_${batch_index}.log
+    gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
 fi
 
 # run the pipeline, rerunning incomplete jobs
+# log message
 cd /home/${user}/FacetsTCGA
+
+gcloud logging write ${gcloud_log_name} \
+    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "started pipeline."}' \
+    --payload-type=json \
+    --severity=INFO
+
 snakemake -s workflow/Snakefile --profile ./profile --resources load=${load} --jobs 50 -f --unlock
 snakemake -s workflow/Snakefile --profile ./profile --resources load=${load} --jobs 50 -f --rerun-incomplete
 
@@ -271,16 +274,30 @@ printf "\nEnd date and time: %s %s\n" "$now_date" "$now_time"
 # before deleting, check that the log was uploaded to the results folder.
 # if not, upload it to the failed folder
 gsutil ls gs://facets_tcga_results/logs/gcloud/startup_gcloud_vm_${batch_index}.log
-status_failed=$?
+status_failed_cur=$?
 
-if [[ $status_failed != 0 ]]; then
-    # log message
-    gcloud logging write ${gcloud_log_name} \
-	'{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed."}' \
-	--payload-type=json \
-	--severity=WARNING
+if [[ ${status_failed_cur} != 0 ]]; then
+    if [[ ${status_failed_pre} != 0 ]]; then
+	# there was no failure log from a previous run of this batch
 
-    gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_${batch_index}.log
+	# log message
+	gcloud logging write ${gcloud_log_name} \
+	    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the first time."}' \
+	    --payload-type=json \
+	    --severity=WARNING
+
+	gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
+    else
+	# there was a failure log from a previous run of this batch
+
+	# log message
+	gcloud logging write ${gcloud_log_name} \
+	    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the second time."}' \
+	    --payload-type=json \
+	    --severity=ERROR
+
+	gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
+    fi 
 fi
 
 # delete instance

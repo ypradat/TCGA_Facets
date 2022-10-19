@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @created: Oct 14 2022
-@modified: Oct 14 2022
+@modified: Oct 19 2022
 @author: Yoann Pradat
 
     CentraleSupelec
@@ -22,22 +22,48 @@ import subprocess
 
 # functions ============================================================================================================
 
+def get_batch_index(x, prefix_1="startup_gcloud_vm_", prefix_2="", suffix=".log"):
+    prefix = "%s%s" % (prefix_1, prefix_2)
+    x_split_prefix = x.split(prefix)
+    if len(x_split_prefix) == 1:
+        return None
+    else:
+        x = x_split_prefix[1]
+        x_split_suffix = x.split(suffix)
+        return int(x_split_suffix[0])
+
+
+def remove_none_entries(l):
+    return [e for e in l if e is not None]
+
+
 def main(args):
+    # load list of all possible batches
     df_sam = pd.read_table(args.samples_table)
-    batches_list = sorted(list(set(df_sam["Batch"].tolist())))
+    batch_list_samples = sorted(list(set(df_sam["Batch"].tolist())))
 
     # select indices according to user specifications
-    batches_list = [x for x in batches_list if x >= args.batch_min]
+    batch_list_samples = [x for x in batch_list_samples if x >= args.batch_min]
     if args.batch_max != -1:
-        batches_list = [x for x in batches_list if x <= args.batch_max]
+        batch_list_samples = [x for x in batch_list_samples if x <= args.batch_max]
 
-    # remove batches already processed
+    # remove batches that were already processed
     cmd_gsutil = "gsutil ls %s" % args.logs_uri
     cmd_output = subprocess.run(cmd_gsutil, shell=True, capture_output=True)
     stdout = cmd_output.stdout.decode("utf-8")
     batches_log_names = [os.path.basename(file) for file in stdout.split()]
-    batches_processed = [int(log.split("startup_gcloud_vm_")[1].split(".log")[0]) for log in batches_log_names]
-    batch_list = sorted(list(set(batches_list).difference(set(batches_processed))))
+    batches_processed = [get_batch_index(log) for log in batches_log_names]
+    batches_processed = remove_none_entries(batches_processed)
+    batch_list = sorted(list(set(batch_list_samples).difference(set(batches_processed))))
+
+    # remove batches that already failed twice
+    cmd_gsutil = "gsutil ls %s" % args.logs_failed_uri
+    cmd_output = subprocess.run(cmd_gsutil, shell=True, capture_output=True)
+    stdout = cmd_output.stdout.decode("utf-8")
+    batches_log_names = [os.path.basename(file) for file in stdout.split()]
+    batches_failed_twice = [get_batch_index(log, prefix_2="second_") for log in batches_log_names]
+    batches_failed_twice = remove_none_entries(batches_failed_twice)
+    batch_list = sorted(list(set(batch_list).difference(set(batches_failed_twice))))
 
     # save
     with open(args.batch_list, "w") as file:
@@ -53,11 +79,13 @@ if __name__ == "__main__":
                         default="config/samples.all.tsv")
     parser.add_argument('--logs_uri', type=str, help='Path to directory of VM logs.',
                         default="gs://facets_tcga_results/logs/gcloud")
+    parser.add_argument('--logs_failed_uri', type=str, help='Path to directory of VM logs.',
+                        default="gs://facets_tcga_results/logs/gcloud_failed")
     parser.add_argument('--batch_min', type=int, help='Minimum index of batches to be processed.',
                         default=1)
     parser.add_argument('--batch_max', type=int,
                         help='Maximum index of batches to be processed. Use -1 for no maximum limit.',
-                        default=10)
+                        default=-1)
     parser.add_argument('--batch_list', type=str, help='Path to output list of batch indices.',
                         default="gcloud/batch_indices.txt")
     args = parser.parse_args()

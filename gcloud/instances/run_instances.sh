@@ -63,16 +63,16 @@ else
 	printf "running batch: %s ...\n" "${batch_index}"
 
 	# Add BAMs to the bucket
-    if [[ ${skip_bam_copy} == "yes" ]]; then
-        printf "skipping copy of BAM files from GDC-controlled bucket\n"
-    else
-        printf "copying BAM files from GDC-controlled bucket...\n"
-        python -u gcloud/buckets/populate_bam_gs_bucket.py \
-           --samples_table config/samples.all.tsv \
-           --bucket_gs_uri "gs://tcga_wxs_bam" \
-           --batch_index ${batch_index}
-        printf "\n\n"
-    fi
+	if [[ ${skip_bam_copy} == "yes" ]]; then
+	    printf "skipping copy of BAM files from GDC-controlled bucket\n"
+	else
+	    printf "copying BAM files from GDC-controlled bucket...\n"
+	    python -u gcloud/buckets/populate_bam_gs_bucket.py \
+	       --samples_table config/samples.all.tsv \
+	       --bucket_gs_uri "gs://tcga_wxs_bam" \
+	       --batch_index ${batch_index}
+	    printf "\n\n"
+	fi
 
 	# Extract disk size required for instance, considering a 50gb margin on top of the
 	# BAM file sizes.
@@ -81,11 +81,23 @@ else
 	    config/samples.all.tsv)
 	instance_size=$(echo $file_sizes| awk '{print int($1+50)}')
 
+	# Define VM RAM size according to previous failed logs
+	# If the pipeline has already failed three times for this batch due to memory usage, make one last try
+	# with a 128-Gb RAM VM. For all runs, use the 64-Gb RAM VM.
+	gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_third_oom_${batch_index}.log
+	status_failed_third_oom=$?
+
+	if [[ ${status_failed_third_oom} != 0 ]]; then
+	    machine_type="e2-highmem-16"
+	else
+	    machine_type="e2-highmem-8"
+	fi
+
 	# Create the instance and run the pipeline via the startup script
 	gcloud compute instances create facets-tcga-${batch_index} \
 	    --project=isb-cgc-external-001 \
 	    --zone=us-central1-a \
-	    --machine-type=e2-highmem-8 \
+	    --machine-type=${machine_type} \
 	    --network-interface=network-tier=PREMIUM,subnet=default \
 	    --no-restart-on-failure \
 	    --maintenance-policy=TERMINATE \
@@ -94,7 +106,7 @@ else
 	    --scopes=https://www.googleapis.com/auth/compute,https://www.googleapis.com/auth/devstorage.read_write,https://www.googleapis.com/auth/logging.admin,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management,https://www.googleapis.com/auth/trace.append \
 	    --enable-display-device \
 	    --tags=https-server \
-	    --create-disk=auto-delete=yes,boot=yes,device-name=facets-tcga-64,image=projects/debian-cloud/global/images/debian-11-bullseye-v20220920,mode=rw,size=${instance_size},type=projects/isb-cgc-external-001/zones/us-central1-a/diskTypes/pd-balanced \
+	    --create-disk=auto-delete=yes,boot=yes,device-name=facets-tcga-${instance_size},image=projects/debian-cloud/global/images/debian-11-bullseye-v20220920,mode=rw,size=${instance_size},type=projects/isb-cgc-external-001/zones/us-central1-a/diskTypes/pd-balanced \
 	    --no-shielded-secure-boot \
 	    --shielded-vtpm \
 	    --shielded-integrity-monitoring \

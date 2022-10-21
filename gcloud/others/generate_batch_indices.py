@@ -56,14 +56,23 @@ def main(args):
     batches_processed = remove_none_entries(batches_processed)
     batch_list = sorted(list(set(batch_list_samples).difference(set(batches_processed))))
 
-    # remove batches that already failed three times
+    # remove batches that already failed three times with another error than oom
     cmd_gsutil = "gsutil ls %s" % args.logs_failed_uri
     cmd_output = subprocess.run(cmd_gsutil, shell=True, capture_output=True)
     stdout = cmd_output.stdout.decode("utf-8")
     batches_log_names = [os.path.basename(file) for file in stdout.split()]
-    batches_failed_third = [get_batch_index(log, prefix_2="third_") for log in batches_log_names]
+    batches_failed_third = [get_batch_index(log, prefix_2="third_error") for log in batches_log_names]
     batches_failed_third = remove_none_entries(batches_failed_third)
     batch_list = sorted(list(set(batch_list).difference(set(batches_failed_third))))
+
+    # remove batches that already failed four times
+    cmd_gsutil = "gsutil ls %s" % args.logs_failed_uri
+    cmd_output = subprocess.run(cmd_gsutil, shell=True, capture_output=True)
+    stdout = cmd_output.stdout.decode("utf-8")
+    batches_log_names = [os.path.basename(file) for file in stdout.split()]
+    batches_failed_fourth = [get_batch_index(log, prefix_2="fourth_") for log in batches_log_names]
+    batches_failed_fourth = remove_none_entries(batches_failed_fourth)
+    batch_list = sorted(list(set(batch_list).difference(set(batches_failed_fourth))))
 
     # save
     with open(args.batch_list, "w") as file:

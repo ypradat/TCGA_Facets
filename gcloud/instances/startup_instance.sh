@@ -236,7 +236,12 @@ status_failed_first=$?
 gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
 status_failed_second=$?
 
-if [[ ${status_failed_second} != 0 ]] && [[ ${status_failed_first} != 0 ]]; then
+# if the pipeline has already failed three times for this batch due to memory usage, reduce to only job at a time to
+# avert memory issues.
+gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_third_oom_${batch_index}.log
+status_failed_third_oom=$?
+
+if [[ ${status_failed_second} != 0 ]] && [[ ${status_failed_first} != 0 ]] && [[ ${status_failed_third_oom} != 0 ]]; then
     # first time this batch is run, try to run the maximum number of jobs in parallel
     load=115
     jobs=50
@@ -253,7 +258,7 @@ elif [[ ${status_failed_first} == 0 ]]; then
 
     # removing existing failed log
     gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
-elif [[ ${status_failed_second} == 0 ]]; then
+elif [[ ${status_failed_second} == 0 ]] ; then
     # third time this batch is run, reduce the maximum number of jobs that can run in parallel to 1
     load=65
     jobs=1
@@ -266,6 +271,19 @@ elif [[ ${status_failed_second} == 0 ]]; then
 
     # removing existing failed log
     gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
+elif [[ ${status_failed_third_oom} == 0 ]] ; then
+    # fourth time this batch is run, reduce the maximum number of jobs that can run in parallel to 1
+    load=65
+    jobs=1
+
+    # log message
+    gcloud logging write ${gcloud_log_name} \
+        '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "this batch has already failed three times, reducing the number of jobs to '${jobs}'."}' \
+        --payload-type=json \
+        --severity=INFO
+
+    # removing existing failed log
+    gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_third_oom_${batch_index}.log
 fi
 
 # run the pipeline, rerunning incomplete jobs
@@ -297,8 +315,8 @@ gsutil ls gs://facets_tcga_results/logs/gcloud/startup_gcloud_vm_${batch_index}.
 status_failed_cur=$?
 
 if [[ ${status_failed_cur} != 0 ]]; then
-    if [[ ${status_failed_first} != 0 ]] && [[ ${status_failed_second} != 0 ]]; then
-        # there was no failure log from a previous run of this batch
+    if [[ ${status_failed_first} != 0 ]] && [[ ${status_failed_second} != 0 ]] && [[ ${status_failed_third_oom} != 0 ]]; then
+        # there is no failure log from a previous run of this batch
 
         # log message
         gcloud logging write ${gcloud_log_name} \
@@ -318,15 +336,47 @@ if [[ ${status_failed_cur} != 0 ]]; then
 
         gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
     elif [[ ${status_failed_second} == 0 ]]; then
-        # there was a failure log after a second run of this batch
+        # there is a failure log after a second run of this batch
+
+        # identify if the job failed because it ran out-of-memory. if yes, make one last try with a larger memory VM
+        grep -rn "Killed" ${gcloud_log_vm}
+        status_oom=$?
+
+        if [[ ${status_oom} == 0 ]]; then
+            # log message
+            gcloud logging write ${gcloud_log_name} \
+                '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the third time with oom error."}' \
+                --payload-type=json \
+                --severity=WARNING
+
+            gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_third_oom_${batch_index}.log
+        else
+            gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_third_oth_${batch_index}.log
+
+            # log message
+            gcloud logging write ${gcloud_log_name} \
+                '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the third time with not oom error."}' \
+                --payload-type=json \
+                --severity=ERROR
+
+            # upload whatever was done
+            python -u gcloud/buckets/populate_results_gs_bucket.py \
+                --bucket_gs_uri "gs://facets_tcga_results"
+        fi
+    elif [[ ${status_failed_third_oom} == 0 ]]; then
+        # there is a failure log after a third run of this batch
 
         # log message
         gcloud logging write ${gcloud_log_name} \
-            '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the third time."}' \
+            '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the fourth time."}' \
             --payload-type=json \
             --severity=ERROR
 
-        gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_third_${batch_index}.log
+        gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_fourth_${batch_index}.log
+
+        # upload whatever was done
+        python -u gcloud/buckets/populate_results_gs_bucket.py \
+            --bucket_gs_uri "gs://facets_tcga_results"
     fi 
 fi
 

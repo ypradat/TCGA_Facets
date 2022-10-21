@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @created: Oct 11 2022
-@modified: Oct 14 2022
+@modified: Oct 21 2022
 @author: Yoann Pradat
 
     CentraleSupelec
@@ -38,28 +38,38 @@ def main(args):
         bai_gs_uri = df_sam.loc[df_sam["Sample_Id"]==sample, "Index_File_Name_Key"].item()
         bam_name = df_sam.loc[df_sam["Sample_Id"]==sample, "File_Name"].item()
         bai_name = df_sam.loc[df_sam["Sample_Id"]==sample, "Index_File_Name"].item()
-
-        cmd_bam_cp = "gsutil cp %s %s" % (bam_gs_uri, args.bucket_gs_uri)
-        cmd_bai_cp = "gsutil cp %s %s" % (bai_gs_uri, args.bucket_gs_uri)
-
-        subprocess.run(cmd_bam_cp, shell=True)
-        print("-copied bam file %s to bucket" % bam_name)
-
-        subprocess.run(cmd_bai_cp, shell=True)
-        print("-copied bam file %s to bucket" % bai_name)
-
-        # rename
         bam_name_new = "%s.bam" % sample
         bai_name_new = "%s.bai" % sample
 
-        cmd_bam_mv = "gsutil mv %s/%s %s/%s" % (args.bucket_gs_uri, bam_name, args.bucket_gs_uri, bam_name_new)
-        cmd_bai_mv = "gsutil mv %s/%s %s/%s" % (args.bucket_gs_uri, bai_name, args.bucket_gs_uri, bai_name_new)
+        # before copying, check if the file already exists
+        cmd_bam_ls = "gsutil ls %s/%s" % (args.bucket_gs_uri, bam_name_new)
+        cm_bam_ls_out = subprocess.run(cmd_bam_ls, shell=True, capture_output=True)
 
-        subprocess.run(cmd_bam_mv, shell=True)
-        print("-renamed bam file %s to %s" % (bam_name, bam_name_new))
+        # returncode 0 means that the file already exists
+        if cm_bam_ls_out.returncode==0:
+            print("-%s/%s already exists!" % (args.bucket_gs_uri, bam_name_new))
+        else
+            cmd_bam_cp = "gsutil cp %s %s" % (bam_gs_uri, args.bucket_gs_uri)
+            subprocess.run(cmd_bam_cp, shell=True)
+            print("-copied bam file %s to bucket" % bam_name)
+            cmd_bam_mv = "gsutil mv %s/%s %s/%s" % (args.bucket_gs_uri, bam_name, args.bucket_gs_uri, bam_name_new)
+            subprocess.run(cmd_bam_mv, shell=True)
+            print("-renamed bam file %s to %s" % (bam_name, bam_name_new))
 
-        subprocess.run(cmd_bai_mv, shell=True)
-        print("-renamed bai file %s to %s" % (bai_name, bai_name_new))
+        # before copying, check if the file already exists
+        cmd_bai_ls = "gsutil ls %s/%s" % (args.bucket_gs_uri, bai_name_new)
+        cm_bai_ls_out = subprocess.run(cmd_bai_ls, shell=True, capture_output=True)
+
+        # returncode 0 means that the file already exists
+        if cm_bai_ls_out.returncode==0:
+            print("-%s/%s already exists!" % (args.bucket_gs_uri, bai_name_new))
+        else
+            cmd_bai_cp = "gsutil cp %s %s" % (bai_gs_uri, args.bucket_gs_uri)
+            subprocess.run(cmd_bai_cp, shell=True)
+            print("-copied bai file %s to bucket" % bai_name)
+            cmd_bai_mv = "gsutil mv %s/%s %s/%s" % (args.bucket_gs_uri, bai_name, args.bucket_gs_uri, bai_name_new)
+            subprocess.run(cmd_bai_mv, shell=True)
+            print("-renamed bai file %s to %s" % (bai_name, bai_name_new))
 
 # run ==================================================================================================================
 

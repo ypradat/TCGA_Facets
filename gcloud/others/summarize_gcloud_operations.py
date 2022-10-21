@@ -37,7 +37,7 @@ def get_operations_table(operation_type, target_link="instances/facets-tcga-[\d]
     else:
         df = pd.DataFrame(lines[1:], columns=lines[0])
         df["TARGET_NAME"] = df["TARGET"].apply(lambda x: os.path.basename(x))
-        df["TIMESTAMP_DT"] = pd.to_datetime(df["TIMESTAMP"])
+        df["TIMESTAMP_DT"] = pd.to_datetime(df["TIMESTAMP"]).apply(lambda x: x.tz_convert("Europe/Paris"))
         return df
 
 
@@ -75,8 +75,9 @@ def compute_runtime(row):
     if (~row[cols_preempted].isnull()).sum() != 0:
         # remove time intervals during which the machine was stopped
         for time_preempted, time_restart in zip(times_preempted, times_restart):
-            runtime_stop = (pd.to_datetime(time_restart)-pd.to_datetime(time_preempted)).seconds/3600
-            runtime -= runtime_stop
+            if not str(time_preempted)=="nan":
+                runtime_stop = (pd.to_datetime(time_restart)-pd.to_datetime(time_preempted)).seconds/3600
+                runtime -= runtime_stop
 
     return runtime
 
@@ -97,16 +98,21 @@ def main(args):
     # list start (i.e instance restart after preemption) operations
     df_start = get_operations_table(operation_type="start")
 
-    # select only latest instance creation
+    # # select only latest instance creation
+    # df_insert = df_insert.sort_values(by=["TARGET_NAME", "TIMESTAMP_DT"], ascending=True)
+    # df_insert = df_insert.drop_duplicates(subset=["TARGET_NAME"], keep="last")
+
+    # select only instances created after 2022-10-18 06:00:00 (Europe/Paris)
     df_insert = df_insert.sort_values(by=["TARGET_NAME", "TIMESTAMP_DT"], ascending=True)
-    df_insert = df_insert.drop_duplicates(subset=["TARGET_NAME"], keep="last")
+    start_timestamp = pd.to_datetime("2022-10-18T06:00:00+02:00")
+    df_insert = df_insert.loc[df_insert["TIMESTAMP_DT"] >= start_timestamp]
 
     # rename columns and merge iteratively
     cols_target = ["TARGET", "TARGET_NAME", "TARGET_ID"]
     cols_time = ["TIMESTAMP"]
     cols_keep = cols_target + cols_time
 
-    # only one insert
+    # only one insert per target id
     suffix = "INSERT"
     old2new = {col: "%s_%s" % (col, suffix) for col in cols_time}
     df_insert = df_insert[cols_keep].rename(columns=old2new)
@@ -129,7 +135,7 @@ def main(args):
     dfs_start = [pivot_duplicate(df_start, cols_target, x) for x in cols_time_suffix]
     df_start = reduce(lambda df1,df2: pd.merge(df1,df2,on=cols_target), dfs_start)
 
-    # only one delete
+    # only one delete per target id
     suffix = "DELETE"
     old2new = {col: "%s_%s" % (col, suffix) for col in cols_time}
     df_delete = df_delete[cols_keep].rename(columns=old2new)
@@ -162,15 +168,16 @@ def main(args):
     # save table
     df_table["TARGET_ID"] = df_table["TARGET_ID"].astype(str)
     df_table["BATCH"] = df_table["BATCH"].astype(int)
-    df_table = df_table.sort_values(by="BATCH")
+    df_table = df_table.sort_values(by=["BATCH", "TIMESTAMP_INSERT"])
     df_table.to_excel(args.operations_table, index=False, float_format="%.3f")
     print("-table saved at %s" % args.operations_table)
 
-    # get total, ignore first 5 batches that were not optimized yet
+    # get total, ignore first batches if used for tests
+    batches_burn_in = 0
     n_batches = df_sam["BATCH"].nunique()
-    avg_cost_per_batch_std = df_table.loc[df_table["BATCH"]>5]["COST_STANDARD"].mean()
-    avg_cost_per_batch_60pct = df_table.loc[df_table["BATCH"]>5]["COST_PREEMPTIBLE_60PCT_DISCOUNT"].mean()
-    avg_cost_per_batch_91pct = df_table.loc[df_table["BATCH"]>5]["COST_PREEMPTIBLE_91PCT_DISCOUNT"].mean()
+    avg_cost_per_batch_std = df_table.loc[df_table["BATCH"]>0]["COST_STANDARD"].mean()
+    avg_cost_per_batch_60pct = df_table.loc[df_table["BATCH"]>0]["COST_PREEMPTIBLE_60PCT_DISCOUNT"].mean()
+    avg_cost_per_batch_91pct = df_table.loc[df_table["BATCH"]>0]["COST_PREEMPTIBLE_91PCT_DISCOUNT"].mean()
 
     total_cost_std = n_batches * avg_cost_per_batch_std
     total_cost_60pct = n_batches * avg_cost_per_batch_60pct

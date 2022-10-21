@@ -238,7 +238,7 @@ status_failed_second=$?
 
 # if the pipeline has already failed three times for this batch due to memory usage, reduce to only job at a time to
 # avert memory issues.
-gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_third_oom_${batch_index}.log &> /dev/null
+gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_third_oom_${batch_index}.log &> /dev/null
 status_failed_third_oom=$?
 
 if [[ ${status_failed_second} != 0 ]] && [[ ${status_failed_first} != 0 ]] && [[ ${status_failed_third_oom} != 0 ]]; then
@@ -273,12 +273,12 @@ elif [[ ${status_failed_second} == 0 ]] ; then
     gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
 elif [[ ${status_failed_third_oom} == 0 ]] ; then
     # fourth time this batch is run, reduce the maximum number of jobs that can run in parallel to 1
-    load=65
-    jobs=1
+    load=115
+    jobs=50
 
     # log message
     gcloud logging write ${gcloud_log_name} \
-        '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "this batch has already failed three times, reducing the number of jobs to '${jobs}'."}' \
+        '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "this batch has already failed three times, running on a larger VM with jobs at '${jobs}'."}' \
         --payload-type=json \
         --severity=INFO
 

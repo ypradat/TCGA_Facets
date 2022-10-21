@@ -48,7 +48,7 @@ def main(args):
         # returncode 0 means that the file already exists
         if cm_bam_ls_out.returncode==0:
             print("-%s/%s already exists!" % (args.bucket_gs_uri, bam_name_new))
-        else
+        else:
             cmd_bam_cp = "gsutil cp %s %s" % (bam_gs_uri, args.bucket_gs_uri)
             subprocess.run(cmd_bam_cp, shell=True)
             print("-copied bam file %s to bucket" % bam_name)
@@ -63,7 +63,7 @@ def main(args):
         # returncode 0 means that the file already exists
         if cm_bai_ls_out.returncode==0:
             print("-%s/%s already exists!" % (args.bucket_gs_uri, bai_name_new))
-        else
+        else:
             cmd_bai_cp = "gsutil cp %s %s" % (bai_gs_uri, args.bucket_gs_uri)
             subprocess.run(cmd_bai_cp, shell=True)
             print("-copied bai file %s to bucket" % bai_name)

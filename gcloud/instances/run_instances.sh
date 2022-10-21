@@ -84,10 +84,10 @@ else
 	# Define VM RAM size according to previous failed logs
 	# If the pipeline has already failed three times for this batch due to memory usage, make one last try
 	# with a 128-Gb RAM VM. For all runs, use the 64-Gb RAM VM.
-	gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_third_oom_${batch_index}.log
+	gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_third_oom_${batch_index}.log &> /dev/null
 	status_failed_third_oom=$?
 
-	if [[ ${status_failed_third_oom} != 0 ]]; then
+	if [[ ${status_failed_third_oom} == 0 ]]; then
 	    machine_type="e2-highmem-16"
 	else
 	    machine_type="e2-highmem-8"

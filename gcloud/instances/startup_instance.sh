@@ -228,17 +228,17 @@ sudo chown -R ${user} /home/${user}
 
 # if the pipeline has already failed once for this batch, reduce the load because very often the
 # failure occurs due to memory issues.
-gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
+gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log &> /dev/null
 status_failed_first=$?
 
 # if the pipeline has already failed twice for this batch, reduce to only job at a time to
 # avert memory issues.
-gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
+gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log &> /dev/null
 status_failed_second=$?
 
 # if the pipeline has already failed three times for this batch due to memory usage, reduce to only job at a time to
 # avert memory issues.
-gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_third_oom_${batch_index}.log
+gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_third_oom_${batch_index}.log &> /dev/null
 status_failed_third_oom=$?
 
 if [[ ${status_failed_second} != 0 ]] && [[ ${status_failed_first} != 0 ]] && [[ ${status_failed_third_oom} != 0 ]]; then
@@ -311,7 +311,7 @@ printf "\nEnd date and time: %s %s\n" "$now_date" "$now_time"
 
 # before deleting, check that the log was uploaded to the results folder.
 # if not, upload it to the failed folder
-gsutil ls gs://facets_tcga_results/logs/gcloud/startup_gcloud_vm_${batch_index}.log
+gsutil ls gs://facets_tcga_results/logs/gcloud/startup_gcloud_vm_${batch_index}.log &> /dev/null
 status_failed_cur=$?
 
 if [[ ${status_failed_cur} != 0 ]]; then

@@ -89,8 +89,10 @@ else
 
 	if [[ ${status_failed_third_oom} == 0 ]]; then
 	    machine_type="e2-highmem-16"
+	    device_name="facets-tcga-128"
 	else
 	    machine_type="e2-highmem-8"
+	    device_name="facets-tcga-64"
 	fi
 
 	# Create the instance and run the pipeline via the startup script
@@ -106,7 +108,7 @@ else
 	    --scopes=https://www.googleapis.com/auth/compute,https://www.googleapis.com/auth/devstorage.read_write,https://www.googleapis.com/auth/logging.admin,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management,https://www.googleapis.com/auth/trace.append \
 	    --enable-display-device \
 	    --tags=https-server \
-	    --create-disk=auto-delete=yes,boot=yes,device-name=facets-tcga-${instance_size},image=projects/debian-cloud/global/images/debian-11-bullseye-v20220920,mode=rw,size=${instance_size},type=projects/isb-cgc-external-001/zones/us-central1-a/diskTypes/pd-balanced \
+	    --create-disk=auto-delete=yes,boot=yes,device-name=${device_name},image=projects/debian-cloud/global/images/debian-11-bullseye-v20220920,mode=rw,size=${instance_size},type=projects/isb-cgc-external-001/zones/us-central1-a/diskTypes/pd-balanced \
 	    --no-shielded-secure-boot \
 	    --shielded-vtpm \
 	    --shielded-integrity-monitoring \

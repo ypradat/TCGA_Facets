@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @created: Oct 15 2022
-@modified: Oct 15 2022
+@modified: Oct 22 2022
 @author: Yoann Pradat
 
     CentraleSupelec
@@ -173,11 +173,15 @@ def main(args):
     print("-table saved at %s" % args.operations_table)
 
     # get total, ignore first batches if used for tests
+    # and sum all lines from the same batch
+    dt_agg = {x: "sum" for x in ["COST_STANDARD", "COST_PREEMPTIBLE_60PCT_DISCOUNT", "COST_PREEMPTIBLE_91PCT_DISCOUNT"]}
+    df_table_sum = df_table.groupby("BATCH").agg(dt_agg).reset_index()
+
     batches_burn_in = 0
     n_batches = df_sam["BATCH"].nunique()
-    avg_cost_per_batch_std = df_table.loc[df_table["BATCH"]>0]["COST_STANDARD"].mean()
-    avg_cost_per_batch_60pct = df_table.loc[df_table["BATCH"]>0]["COST_PREEMPTIBLE_60PCT_DISCOUNT"].mean()
-    avg_cost_per_batch_91pct = df_table.loc[df_table["BATCH"]>0]["COST_PREEMPTIBLE_91PCT_DISCOUNT"].mean()
+    avg_cost_per_batch_std = df_table_sum.loc[df_table_sum["BATCH"]>0]["COST_STANDARD"].mean()
+    avg_cost_per_batch_60pct = df_table_sum.loc[df_table_sum["BATCH"]>0]["COST_PREEMPTIBLE_60PCT_DISCOUNT"].mean()
+    avg_cost_per_batch_91pct = df_table_sum.loc[df_table_sum["BATCH"]>0]["COST_PREEMPTIBLE_91PCT_DISCOUNT"].mean()
 
     total_cost_std = n_batches * avg_cost_per_batch_std
     total_cost_60pct = n_batches * avg_cost_per_batch_60pct

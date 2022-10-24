@@ -73,7 +73,9 @@ def main(args):
     header = read_header(args.input[0])
 
     # load tables
-    files = args.input
+    # files = args.input
+    folder = args.input
+    files = os.listdir(folder)
     dfs = []
     for i, file in enumerate(files):
         filepath = os.path.join(folder, file)
@@ -87,6 +89,7 @@ def main(args):
 
     # concatenate
     df = pd.concat(dfs, axis=0)
+    df = df.loc[:, df.isnull().mean(axis=0)<1]
 
     # save
     if not args.keep_header:
@@ -99,12 +102,11 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Concatenate multiple MAF tables.")
-    parser.add_argument('--input', nargs="+", type=str, help='Paths to maf tables.',
-                        default="results/annotation/somatic_cna_oncokb_filter")
+    parser.add_argument('--input', nargs="+", type=str, help='Paths to maf tables.')
     parser.add_argument("--keep_header", action="store_true", default=False,
                         help="If used, the header of the maf tables is preserved.")
     parser.add_argument('--output', type=str, help='Path to output table.',
-                        default="results/aggregate/somatic_cna/somatic_cna_calls_oncokb.tsv.gz")
+                        default="results/aggregate/somatic_cna/somatic_calls_oncokb.tsv.gz")
     args = parser.parse_args()
 
     for arg in vars(args):

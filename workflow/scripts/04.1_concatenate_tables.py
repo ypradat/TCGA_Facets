@@ -73,16 +73,17 @@ def main(args):
     header = read_header(args.input[0])
 
     # load tables
-    dfs = [read_table(path) for path in args.input]
-    # folder = "results/annotation/somatic_oncokb_maf_filter"
-    # files = os.listdir(folder)
-    # dfs = []
-    # for i, file in enumerate(files):
-    #     filepath = os.path.join(folder, file)
-    #     df = read_table(filepath)
-    #     dfs.append(df)
-    #     if (i+1)%(len(files)//100)==0:
-    #         print("-processed %d/%d files" % (i+1, len(files)), flush=True)
+    files = args.input
+    dfs = []
+    for i, file in enumerate(files):
+        filepath = os.path.join(folder, file)
+        if os.stat(filepath).st_size==0:
+            print("-file %s has size 0B" % filepath)
+        else:
+            df = read_table(filepath)
+            dfs.append(df)
+            if (i+1)%(len(files)//100)==0:
+                print("-processed %d/%d files" % (i+1, len(files)), flush=True)
 
     # concatenate
     df = pd.concat(dfs, axis=0)
@@ -98,10 +99,12 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Concatenate multiple MAF tables.")
-    parser.add_argument('--input', nargs="+", type=str, help='Paths to maf tables.')
+    parser.add_argument('--input', nargs="+", type=str, help='Paths to maf tables.',
+                        default="results/annotation/somatic_cna_oncokb_filter")
     parser.add_argument("--keep_header", action="store_true", default=False,
                         help="If used, the header of the maf tables is preserved.")
-    parser.add_argument('--output', type=str, help='Path to output table.')
+    parser.add_argument('--output', type=str, help='Path to output table.',
+                        default="results/aggregate/somatic_cna/somatic_cna_calls_oncokb.tsv.gz")
     args = parser.parse_args()
 
     for arg in vars(args):

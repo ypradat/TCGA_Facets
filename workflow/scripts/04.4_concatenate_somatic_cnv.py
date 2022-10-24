@@ -40,7 +40,7 @@ def main(args):
     # load per sample calls
     files = args.cnv
     dfs_cna = []
-    for file in files:
+    for i, file in enumerate(files):
         df_cna = pd.read_table(file)
 
         if "Tumor_Sample_Barcode" not in df_cna and "Matched_Norm_Sample_Barcode" not in df_cna:
@@ -54,6 +54,9 @@ def main(args):
             df_cna.insert(1, "Matched_Norm_Sample_Barcode", nsample)
 
         dfs_cna.append(df_cna)
+        if (i+1)%(len(files)//100)==0:
+            print("-processed %d/%d files" % (i+1, len(files)), flush=True)
+
     df_cna = pd.concat(dfs_cna)
 
     # add FILTER

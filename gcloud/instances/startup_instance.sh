@@ -100,20 +100,20 @@ then
 fi
 
 
-if [[ ! -d "/home/${user}/FacetsTCGA" ]]
+if [[ ! -d "/home/${user}/TCGA_Facets" ]]
 then
     # get the code
-    git clone https://ypradat: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@github.com/ypradat/FacetsTCGA.git /home/${user}/FacetsTCGA
+    git clone https://ypradat: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@github.com/ypradat/TCGA_Facets.git /home/${user}/TCGA_Facets
 
     # log message
     gcloud logging write ${gcloud_log_name} \
-	'{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "git clone FacetsTCGA done."}' \
+	'{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "git clone TCGA_Facets done."}' \
 	--payload-type=json \
 	--severity=INFO
 fi
 
 # get folders resources and external required for running the pipeline
-cd /home/${user}/FacetsTCGA
+cd /home/${user}/TCGA_Facets
 
 if [[ ! -d "external" ]]
 then
@@ -204,7 +204,7 @@ fi
 # create env for running snakemake
 if [[ ! -d "${snakemake_env_dir}" ]]
 then
-    mamba env create --prefix ${snakemake_env_dir} -f /home/${user}/FacetsTCGA/workflow/envs/snakemake.yaml
+    mamba env create --prefix ${snakemake_env_dir} -f /home/${user}/TCGA_Facets/workflow/envs/snakemake.yaml
 
     # log message
     if [[ -d "${snakemake_env_dir}" ]]; then
@@ -288,7 +288,7 @@ fi
 
 # run the pipeline, rerunning incomplete jobs
 # log message
-cd /home/${user}/FacetsTCGA
+cd /home/${user}/TCGA_Facets
 
 gcloud logging write ${gcloud_log_name} \
     '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "started pipeline."}' \

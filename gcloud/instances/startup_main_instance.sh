@@ -48,10 +48,10 @@ source activate /home/ypradat/miniconda3
 conda install -y pandas
 
 # get the code
-git clone https://ypradat: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@github.com/ypradat/FacetsTCGA.git /home/ypradat/FacetsTCGA
+git clone https://ypradat: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@github.com/ypradat/TCGA_Facets.git /home/ypradat/TCGA_Facets
 
 # get resources and external
-cd /home/ypradat/FacetsTCGA
+cd /home/ypradat/TCGA_Facets
 
 # set permissions to user
 sudo chown -R ypradat /home/ypradat

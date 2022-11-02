@@ -4,7 +4,7 @@ while getopts ":a:b:t:n:" opt; do
     case $opt in
 	a) gs_res_bucket="$OPTARG"
 	    ;;
-	b) vm_res_bucket="$OPTARG"
+	b) vm_res_folder="$OPTARG"
 	    ;;
 	t) tsample="$OPTARG"
 	    ;;
@@ -22,7 +22,7 @@ while getopts ":a:b:t:n:" opt; do
     esac
 done
 
-gs_vcf_file=${gs_bam_bucket}/calling/somatic_cnv_facets/${tsample}_vs_${nsample}.vcf.gz
+gs_vcf_file=${gs_res_bucket}/calling/somatic_cnv_facets/${tsample}_vs_${nsample}.vcf.gz
 vm_vcf_file=${vm_res_folder}/calling/somatic_cnv_facets/${tsample}_vs_${nsample}.vcf.gz
 gsutil ls ${gs_vcf_file}
 status=$?

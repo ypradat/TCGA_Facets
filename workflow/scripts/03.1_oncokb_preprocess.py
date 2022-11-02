@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @created: Jan 11 2022
-@modified: May 10 2022
+@modified: Oct 26 2022
 @author: Yoann Pradat
 
     CentraleSupelec
@@ -58,7 +58,7 @@ def select_genes(df_alt, alt_gene_name, df_gen, gen_gene_name, table_gen):
         return df_alt
 
 
-def load_and_preprocess_cnv(table_alt, table_gen, table_cln, gen_gene_name):
+def load_and_preprocess_cna(table_alt, table_gen, table_cln, gen_gene_name):
     # load alterations
     df_cna = pd.concat([read_table(tab) for tab in table_alt])
     df_gen = read_table(table_gen)
@@ -177,18 +177,18 @@ def load_and_preprocess_fus(table_alt, table_gen, table_cln, gen_gene_name):
 
 def main(args):
     # load
-    if args.alteration_type == "cnv":
-        df_alt, df_cln = load_and_preprocess_cnv(table_alt=args.table_alt, table_gen=args.table_gen,
+    if args.category == "cna":
+        df_alt, df_cln = load_and_preprocess_cna(table_alt=args.table_alt, table_gen=args.table_gen,
                                                  table_cln=args.table_cln, gen_gene_name=args.gen_gene_name)
-    elif args.alteration_type == "mut":
+    elif args.category == "mut":
         df_alt, df_cln = load_and_preprocess_mut(table_alt=args.table_alt, table_gen=args.table_gen,
                                                  table_cln=args.table_cln, gen_gene_name=args.gen_gene_name,
                                                  maf_ncbi_build=args.maf_ncbi_build)
-    elif args.alteration_type == "fus":
+    elif args.category == "fus":
         df_alt, df_cln = load_and_preprocess_fus(table_alt=args.table_alt, table_gen=args.table_gen,
                                                  table_cln=args.table_cln, gen_gene_name=args.gen_gene_name)
     else:
-        raise ValueError("Unsupported value '%s' for --alteration_type. Choose 'cnv', 'mut' or 'fus'" % args.alteration_type)
+        raise ValueError("Unsupported value '%s' for --category. Choose 'cna', 'mut' or 'fus'" % args.category)
 
     # save
     df_alt.to_csv(args.output_alt, index=False, sep="\t")
@@ -207,7 +207,7 @@ if __name__ == "__main__":
     parser.add_argument('--table_gen', type=str, help='Path to table of genes.')
     parser.add_argument('--gen_gene_name', type=str, help='Column containing gene names in genes.',
                        default="Hugo Symbol")
-    parser.add_argument('--alteration_type', type=str, help='Choose one of cnv, mut or fus.')
+    parser.add_argument('--category', type=str, help='Choose one of cna, mut or fus.')
     parser.add_argument('--maf_ncbi_build', type=str, default=None,
                         help='NCBI build for updating NCBI_Build value of MAF table.')
     parser.add_argument('--output_alt', type=str, help='Path to output table alterations table for oncokb annotator.')

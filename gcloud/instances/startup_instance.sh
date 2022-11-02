@@ -2,6 +2,7 @@
 
 user=ypradat
 batch_index=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/batch_index -H "Metadata-Flavor: Google")
+start_from=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/start_from -H "Metadata-Flavor: Google")
 zone=$(curl -H Metadata-Flavor:Google http://metadata.google.internal/computeMetadata/v1/instance/zone -s | cut -d/ -f4)
 instance_id=$(gcloud compute instances describe $(hostname) --zone=${zone} --format="get(id)")
 gcloud_log_name=startup-gcloud-vm-${batch_index}
@@ -83,8 +84,7 @@ fi
 
 
 # install locales to avoid warning "/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)"
-if [[ ! $(sed -n '/^LANG="nb_NO.UTF-8"/p;q/p;q' /etc/default/locale) ]]
-then
+if ! grep -R '^LANG="nb_NO.UTF-8"' /etc/default/locale > /dev/null ; then
     sudo apt --assume-yes install locales
     sudo dpkg-reconfigure -f noninteractive tzdata
     sudo sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen
@@ -154,6 +154,12 @@ then
 	--severity=INFO
 fi
 
+# setup config yaml
+if ! grep -R '^start_from:' config/config.yaml > /dev/null ; then
+    printf "start_from: %s" "${start_from}" >> config/config.yaml
+else
+    sed -i -e "s/start_from:.*/start_form: ${start_from}" config/config.yaml
+fi
 
 # install conda and mamba
 if [[ ! -d "/home/${user}/miniconda3" ]]
@@ -381,4 +387,4 @@ if [[ ${status_failed_cur} != 0 ]]; then
 fi
 
 # delete instance
-gcloud compute instances delete $(hostname) --zone=${zone} --delete-disks=all --quiet
+# gcloud compute instances delete $(hostname) --zone=${zone} --delete-disks=all --quiet

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @created: Jan 24 2022
-@modified: May 10 2022
+@modified: Oct 26 2022
 @author: Yoann Pradat
 
     CentraleSupelec
@@ -56,7 +56,7 @@ def main(args):
             df_table[cols] = df_table["SAMPLE_ID"].apply(lambda x: x.split("_vs_")).apply(pd.Series)
             del df_table["SAMPLE_ID"]
 
-    if args.alteration_type == "mut":
+    if args.category == "mut":
         # OncoKB is likely misannotating variants from some categories. Consequently, only some
         # categories of variants are retained.
         if "Variant_Classification" not in df_table:
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     parser.add_argument('--input', type=str, help='Path to input table.')
     parser.add_argument('--rules', type=str, help='Path to table of rules for cleaning.',
                         default="../../data/resources/oncokb/OncoKB_Curation_And_Rules.xlsx")
-    parser.add_argument('--alteration_type', type=str, help='Choose one of cnv, mut or fus.')
+    parser.add_argument('--category', type=str, help='Choose one of cna, mut or fus.')
     parser.add_argument('--output', type=str, help='Path to output table.')
     args = parser.parse_args()
 

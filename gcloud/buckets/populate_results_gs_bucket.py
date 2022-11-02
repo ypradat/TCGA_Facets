@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @created: Oct 11 2022
-@modified: Oct 11 2022
+@modified: Nov 02 2022
 @author: Yoann Pradat
 
     CentraleSupelec
@@ -27,10 +27,13 @@ def main(args):
     supfolders_vm = ["results", "workflow/logs", "workflow/benchmarks"]
     supfolders_gs = ["%s/%s" % (args.bucket_gs_uri, x) for x in ["results", "logs", "benchmarks"]]
     midfolders = ["calling", "annotation"]
-    subfolders = ["somatic_cnv_bed", "somatic_cnv_calls", "somatic_cnv_chr_arm", "somatic_cnv_facets",
-                  "somatic_cnv_sum", "somatic_cnv_table", "somatic_cna_civic", "somatic_cna_civic_filter",
-                  "somatic_cna_civic_preprocess",  "somatic_cna_oncokb",  "somatic_cna_oncokb_filter",
-                  "somatic_cna_oncokb_preprocess"]
+
+    subfolders = ["somatic_cnv_chr_arm", "somatic_cnv_sum", "somatic_cnv_table",
+                  "somatic_cnv_gene_calls_unfiltered", "somatic_cnv_gene_calls_filtered",
+                  "somatic_cna_civic", "somatic_cna_oncokb"]
+
+    if args.start_from in ["download_bam", "get_snp_pileup", "somatic_cnv_facets"]:
+        subfolders = ["somatic_cnv_facets"] + subfolders
 
     for supfolder_vm, supfolder_gs in zip(supfolders_vm, supfolders_gs):
         if os.path.exists(supfolder_vm):
@@ -65,6 +68,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Upload results to bucket.")
     parser.add_argument('--bucket_gs_uri', type=str, help='Google cloud storage URI to bucket.',
                         default="gs://facets_tcga_results")
+    parser.add_argument('--start_from', type=str, help='Rule name from which the pipeline started.',
+                        default="download_bam")
     args = parser.parse_args()
 
     for arg in vars(args):

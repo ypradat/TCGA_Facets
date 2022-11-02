@@ -1,5 +1,5 @@
 # created: Oct 03 2022
-# modified: Oct 05 2022
+# modified: Oct 31 2022
 # author: Yoann Pradat
 # 
 #     CentraleSupelec
@@ -10,11 +10,16 @@
 #     Prism Center
 #     114 rue Edouard Vaillant, Villejuif, 94800 France
 # 
-# Compute chromosome arm copy-number changes using CN segments estimated by FACETS.
+# Starting from the VCF file with SCNA segments estimated by FACETs, do the following:
+#  - compute chromosome-arm SCNAs via facetsSuite
+#  - compute summary statistics using facetsSuite and in-house code.
+#  - categorize SCNAs using a set of rules.
 
 suppressPackageStartupMessages(library(argparse))
 suppressPackageStartupMessages(library(dplyr))
 suppressPackageStartupMessages(library(facetsSuite))
+suppressPackageStartupMessages(library(readxl))
+suppressPackageStartupMessages(library(tidyr))
 
 # functions ============================================================================================================
 
@@ -323,30 +328,59 @@ calculate_wgd <- function(df_cnv_tab, genome){
   df_cnv_tab <- df_cnv_tab %>% filter(chrom %in% 1:22) %>% mutate(mcn.em=tcn.em-lcn.em)
   genome <- genome %>% filter(chrom %in% 1:22)
 
-  n_chr_dup <- 0
-  chr_arm_dup <- data.frame()
-  for (chr in 1:22){
-    chr_length <- genome %>% filter(chrom==chr) %>% pull(size)
-    chr_fraction <- sum(df_cnv_tab %>% filter(chrom==chr, mcn.em >= 1.5) %>% pull(svlen)) / chr_length
-    if (chr_fraction >= 0.5){
-      n_chr_dup <- n_chr_dup + 1
-      chr_arm_dup <- bind_rows(chr_arm_dup, data.frame(chrom=chr, fraction=chr_fraction, duplicated=1))
-    } else {
-      chr_arm_dup <- bind_rows(chr_arm_dup, data.frame(chrom=chr, fraction=chr_fraction, duplicated=0))
+  stop_loop <- F
+  wgd <- 0
+  chr_arm_dup_wgd <- NULL
+  while (!stop_loop){
+    n_chr_dup <- 0
+    chr_arm_dup <- data.frame()
+    for (chr in 1:22){
+      chr_length <- genome %>% filter(chrom==chr) %>% pull(size)
+      chr_fraction <- sum(df_cnv_tab %>% filter(chrom==chr, mcn.em > 1.5*2^(wgd)) %>% pull(svlen)) / chr_length
+      if (chr_fraction >= 0.5){
+        n_chr_dup <- n_chr_dup + 1
+        chr_arm_dup <- bind_rows(chr_arm_dup, data.frame(chrom=chr, fraction=chr_fraction, duplicated=1))
+      } else {
+        chr_arm_dup <- bind_rows(chr_arm_dup, data.frame(chrom=chr, fraction=chr_fraction, duplicated=0))
+      }
     }
+
+    if (n_chr_dup >= 11){
+      wgd <- wgd + 1
+      chr_arm_dup_wgd <- chr_arm_dup
+    } else {
+      stop_loop <- T
+    }
+
+    if (is.null(chr_arm_dup_wgd)) chr_arm_dup_wgd <- chr_arm_dup
   }
 
-  wgd <- 0
-  if (n_chr_dup >= 11) wgd <- 1
-
-  list(chr_arm_dup=chr_arm_dup, wgd=wgd)
+  list(chr_arm_dup=chr_arm_dup_wgd, wgd=wgd)
 }
 
 
 main <- function(args){
   # load CN segments from cnv_facets
-  df_cnv_tab <- load_table(args$input_tab)
   vcf_header <- unlist(read_header(args$input_vcf, prefix="##"))
+  df_cnv_tab <- load_table(args$input_vcf, header_prefix="##", na=c("", "NA", "-", "."))
+
+  # reformat INFO
+  info_cols <- gsub("=[a-zA-Z0-9\\.\\-]*", "", unlist(strsplit(df_cnv_tab$INFO[1], ";")))
+  info_cols_num <- setdiff(info_cols, c("SVTYPE", "CNV_ANN"))
+  df_cnv_tab <- df_cnv_tab %>% separate(INFO, info_cols, sep=";")
+  df_cnv_tab <- df_cnv_tab %>% mutate(across(all_of(info_cols), ~ gsub("[A-Za-z0-9\\.\\-_]*=", "", .x)))
+  df_cnv_tab <- df_cnv_tab %>% mutate(across(all_of(info_cols), ~ na_if(.x, ".")))
+  df_cnv_tab <- df_cnv_tab %>% mutate(across(all_of(info_cols_num), ~ as.numeric(.x)))
+
+  # rename columns
+  colnames(df_cnv_tab) <- sapply(colnames(df_cnv_tab), function(x) gsub("_", ".", tolower(x)))
+  old2new <- list("#chrom"="chrom", "id"="seg", "pos"="start", "maf.r"="mafR", "maf.r.clust"="mafR.clust")
+  df_cnv_tab <- df_cnv_tab %>% rename_at(vars(names(old2new)), ~ unlist(old2new))
+
+  # columns order and keep
+  cols_keep <- c("chrom", "seg", "num.mark", "nhet", "cnlr.median", "mafR", "segclust", "cnlr.median.clust",
+                 "mafR.clust", "start", "end", "cf.em", "tcn.em", "lcn.em", "svtype", "svlen") 
+  df_cnv_tab <- df_cnv_tab[, cols_keep]
 
   # extract purity, ploidy from header
   purity <- extract_from_header(vcf_header, "purity")
@@ -363,8 +397,7 @@ main <- function(args){
   df_cnv_tab$chrom <- as.numeric(df_cnv_tab$chrom)
 
   # compute chromsome arm CNA
-  out_arm_level <- arm_level_changes(df_cnv_tab, ploidy, genome=args$genome, algorithm="em")
-  df_chr_arm <- out_arm_level$full_output
+  out_arm_level <- arm_level_changes(df_cnv_tab, ploidy, genome="hg19", algorithm="em")
 
   # extract CNA scores from facetsSuite ================================================================================
   out_genome_doubled <- out_arm_level$genome_doubled
@@ -374,7 +407,7 @@ main <- function(args){
 
   # loh
   # needs to capture $jointseg table from facets::procSample output, which is not done by cnv_facets
-  # out_loh <- calculate_loh(df_cnv_tab, df_snps, ploidy, genome=args$genome, algorithm="em")
+  # out_loh <- calculate_loh(df_cnv_tab, df_snps, ploidy, genome="hg19", algorithm="em")
 
   # ntai
   # only segments with at least 250 probes are considered
@@ -394,14 +427,14 @@ main <- function(args){
   # - ntelomeric_loh: number of chr segment starts and ends that are telomeric AI and LOH (lcn=0). range 0-44 (or 39?).
   # - ninterstitial_ai: number of chr segments that are interstitial AI and LOH (lcn=0). range 0-inf
   # - ncentromeric_ai: number of chromosomes that are AI and LOH (lcn=0). range 0-22
-  out_ntai <- calculate_ntai(df_cnv_tab, ploidy, genome=args$genome, algorithm="em", min_size=0, min_probes=250)
+  out_ntai <- calculate_ntai(df_cnv_tab, ploidy, genome="hg19", algorithm="em", min_size=0, min_probes=250)
 
   # lst
   # large-scale state transitions (LST) genome wide (the number of CNV breakpoints >10Mb)
   #  - consider only autosomes (1:22)
   #  - smoothen segments less than 3Mb
   #  - LST event where 2 consecutive segments each larger than 10 Mb are less than 3 Mb apart
-  out_lst <- calculate_lst_custom(segs=df_cnv_tab, ploidy, genome=args$genome, algorithm="em", min_size=10e6)
+  out_lst <- calculate_lst_custom(segs=df_cnv_tab, ploidy, genome="hg19", algorithm="em", min_size=10e6)
 
   # hrdloh
   # returns the following statistic: number of segments that
@@ -411,9 +444,61 @@ main <- function(args){
   #  - are on autosomes (1:22)
   out_hrdloh <- calculate_hrdloh(df_cnv_tab, ploidy, algorithm="em")
 
-  # compute in-house CNA scores ========================================================================================
+  # compute WGD status and then classify SCNAs base on rules ===========================================================
   genome <- extract_genome_sizes(vcf_header)
+  out_wgd <- calculate_wgd(df_cnv_tab, genome)
 
+  # add WGD status, ploidy, gender and X_Male
+  df_cnv_tab <- df_cnv_tab %>% mutate(Ploidy=ploidy, WGD=out_wgd$wgd, Gender=args$gender)
+
+  # add X_Male status
+  df_cnv_tab <- df_cnv_tab %>% mutate(X_Male=0)
+  mask_male <- tolower(df_cnv_tab$Gender)=="male"
+  mask_xchr <- df_cnv_tab$chrom %in% c("23")
+  df_cnv_tab[mask_male & mask_xchr, "X_Male"] <- 1
+
+  # load rules
+  df_rules <- read_excel(args$rules_cat)
+  df_cnv_tab <- df_cnv_tab %>% mutate(TCN_Key=`tcn.em`, LCN_Key=`lcn.em`)
+
+  # execute rules line by line
+  x <- out_wgd$wgd
+  if (x==0){
+    df_rules <- df_rules %>% filter(WGD==0)
+  } else {
+    df_rules <- df_rules %>% filter(WGD!=0)
+  }
+
+  # replace ** by ^
+  df_rules$TCN <- gsub("\\*\\*", "\\^", df_rules$TCN)
+
+  for (i in 1:nrow(df_rules)){
+    rule <- df_rules[i,]
+    mask_rule <- df_cnv_tab$X_Male==rule$X_Male
+    for (cn in c("TCN", "LCN")){
+      if (rule[[cn]] != "NA" & !is.na(rule[[cn]])){
+        if (is.character(rule[[cn]]) & grepl(",", rule[[cn]])){
+          rule_cn_low <- unlist(strsplit(rule[[cn]], ","))[[1]]
+          rule_cn_high <- unlist(strsplit(rule[[cn]], ","))[[2]]
+          mask_rule <- mask_rule & eval(parse(text=paste0("df_cnv_tab[['", cn, "_Key']]", rule_cn_low)))
+          mask_rule <- mask_rule & eval(parse(text=paste0("df_cnv_tab[['", cn, "_Key']]", rule_cn_high)))
+        } else {
+          value_cn <- rule[[cn]]
+          mask_rule <- mask_rule & tryCatch({
+            eval(parse(text=paste0("df_cnv_tab[['", cn, "_Key']]", value_cn)))
+            }, error=function(cond) {
+            eval(parse(text=paste0("df_cnv_tab[['", cn, "_Key']]==", value_cn)))
+          })
+        }
+      }
+    }
+    mask_rule[is.na(mask_rule)] <- FALSE
+
+    df_cnv_tab[mask_rule, "copy_number"] <- rule[["State"]]
+    df_cnv_tab[mask_rule, "copy_number_more"] <- rule[["State_More"]]
+  }
+
+  # compute in-house CNA scores ========================================================================================
   out_genome_fractions <- calculate_genome_fractions(df_cnv_tab, genome)
   out_wgd <- calculate_wgd(df_cnv_tab, genome)
 
@@ -437,21 +522,98 @@ main <- function(args){
                                      check.names=F))
   df_cna_sum <- bind_cols(df_cna_sum, data.frame(out_ntai, check.names=F))
 
+  # process chr_arm to add State and State_More columns based on rules =================================================
+  df_chr_arm <- out_arm_level$full_output
+
+  # add samples ids to chr_arm table
+  df_chr_arm <- bind_cols(data.frame(Tumor_Sample_Barcode=rep(tumor_sample, nrow(df_chr_arm)),
+                                     Matched_Norm_Sample_Barcode=rep(normal_sample, nrow(df_chr_arm))),
+                          df_chr_arm)
+  cols_chr_arm <- colnames(df_chr_arm)
+
+  # add WGD status, ploidy, gender and X_Male
+  df_chr_arm <- df_chr_arm %>% mutate(Ploidy=ploidy, WGD=out_wgd$wgd, Gender=args$gender)
+
+  # add X_Male status
+  df_chr_arm <- df_chr_arm %>% mutate(X_Male=0)
+  mask_male <- tolower(df_chr_arm$Gender)=="male"
+  mask_xchr <- df_chr_arm$arm %in% c("23p", "23q")
+  df_chr_arm[mask_male & mask_xchr, "X_Male"] <- 1
+
+  # build key to match with rules
+  df_rules <- read_excel(args$rules_arm)
+
+  # first check if abolute or relative CN should be used
+  df_chr_arm <- left_join(df_chr_arm, df_rules[,c("WGD", "X_Male", "Ratio_To_Ploidy")] %>% distinct())
+  mask_ratio <- df_chr_arm[["Ratio_To_Ploidy"]]==1
+  mask_ratio[is.na(mask_ratio)] <- FALSE
+  df_chr_arm[["TCN_Key"]] <- df_chr_arm[["tcn"]]
+  df_chr_arm[mask_ratio, "TCN_Key"] <- df_chr_arm[mask_ratio, "tcn"]/df_chr_arm[mask_ratio, "Ploidy"]
+  df_chr_arm[["LCN_Key"]] <- df_chr_arm[["lcn"]]
+  df_chr_arm[mask_ratio, "LCN_Key"] <- df_chr_arm[mask_ratio, "lcn"]/df_chr_arm[mask_ratio, "Ploidy"]
+
+  # select rules
+  x <- out_wgd$wgd
+  if (x==0){
+    df_rules <- df_rules %>% filter(WGD==0)
+  } else {
+    df_rules <- df_rules %>% filter(WGD!=0)
+  }
+
+  # execute rules line by line
+  for (i in 1:nrow(df_rules)){
+    rule <- df_rules[i,]
+    mask_rule <- df_chr_arm$WGD==rule$WGD
+    mask_rule <- mask_rule & (df_chr_arm$X_Male==rule$X_Male)
+    for (cn in c("TCN", "LCN")){
+      if (rule[[cn]] != "NA" & !is.na(rule[[cn]])){
+        if (is.character(rule[[cn]]) & grepl(",", rule[[cn]])){
+          rule_cn_low <- unlist(strsplit(rule[[cn]], ","))[[1]]
+          rule_cn_high <- unlist(strsplit(rule[[cn]], ","))[[2]]
+          mask_rule <- mask_rule & eval(parse(text=paste0("df_chr_arm[['", cn, "_Key']]", rule_cn_low)))
+          mask_rule <- mask_rule & eval(parse(text=paste0("df_chr_arm[['", cn, "_Key']]", rule_cn_high)))
+        } else {
+          value_cn <- rule[[cn]]
+          mask_rule <- mask_rule & tryCatch({
+            eval(parse(text=paste0("df_chr_arm[['", cn, "_Key']]", value_cn)))
+            }, error=function(cond) {
+            eval(parse(text=paste0("df_chr_arm[['", cn, "_Key']]==", value_cn)))
+          })
+        }
+      }
+    }
+
+    mask_rule[is.na(mask_rule)] <- FALSE
+    df_chr_arm[mask_rule, "copy_number"] <- rule[["State"]]
+    df_chr_arm[mask_rule, "copy_number_more"] <- rule[["State_More"]]
+  }
+
+  # select columns
+  cols_keep <- union(cols_chr_arm, c("Ploidy", "WGD", "copy_number", "copy_number_more"))
+  df_chr_arm <- df_chr_arm[,cols_keep]
+
+  # fill empty copy_number and copy_number_more
+  mask_null <- is.na(df_chr_arm[["copy_number"]])
+  df_chr_arm[mask_null, "copy_number"] <- 0
+  df_chr_arm[mask_null, "copy_number_more"] <- "NEUTR"
 
   # save results =======================================================================================================
   write.table(df_chr_arm, file=args$output_arm, row.names=F, sep="\t", quote=F)
   write.table(df_cna_sum, file=args$output_sum, row.names=F, sep="\t", quote=F)
+  write.table(df_cnv_tab, file=args$output_tab, row.names=F, sep="\t", quote=F)
 }
 
 # run ==================================================================================================================
 
 if (getOption('run.main', default=TRUE)) {
   parser <- ArgumentParser(description='Call chromosome arm copy-number changes.')
-  parser$add_argument("--input_tab", type="character", help="Path to table parsed from vcf of cnv_facets.")
   parser$add_argument("--input_vcf", type="character", help="Path to VCF from cnv_facets.")
-  parser$add_argument("--genome", type="character", help="Genome build.", default="hg38")
-  parser$add_argument("--output_arm", type="character", help="Path to output table of chromosome arm CNVs.")
-  parser$add_argument("--output_sum", type="character", help="Path to output table CNV summary statistics.")
+  parser$add_argument("--gender", type="character", help="'Gender of the sample. Either 'Male' or 'Female'.")
+  parser$add_argument("--rules_cat", type="character", help="Path to table of rules for calling SCNA categories.")
+  parser$add_argument("--rules_arm", type="character", help="Path to table of rules for calling chromosome arm events.")
+  parser$add_argument("--output_arm", type="character", help="Path to output table of chromosome arm SCNAs.")
+  parser$add_argument("--output_sum", type="character", help="Path to output table of SCNA summary statistics.")
+  parser$add_argument("--output_tab", type="character", help="Path to output table of categorized SCNAs.")
   parser$add_argument('--log', type="character", help='Path to log file.')
   args <- parser$parse_args()
 

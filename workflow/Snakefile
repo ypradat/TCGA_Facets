@@ -1,5 +1,5 @@
 # @created: 06 Oct 22
-# @modified: 18 Oct 22
+# @modified: 02 Nov 22
 # @uthor: Yoann Pradat
 #
 # This pipeline runs FACETS and downstream tools for analysing SCNAs in exome-sequencing data from TCGA. 
@@ -8,47 +8,55 @@ include: "rules/common.smk"
 
 ##### Target rules #####
 
+def get_input_rule_all(w):
+    inputs = []
+
+    # +++++++++++++++++++++++
+    #### MAPPING
+    # +++++++++++++++++++++++
+    if config["start_from"] in ["download_bam", "get_snp_pileup"]:
+        inputs += expand("%s/mapping/{sample}.bam" % R_FOLDER, sample=samples)
+        inputs += expand("%s/mapping/{sample}.bai" % R_FOLDER, sample=samples)
+        inputs += ["%s/remove_bams.done" % L_FOLDER]
+    if config["start_from"] in ["get_snp_pileup"]:
+        inputs += expand("%s/calling/somatic_snp_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER, \
+            get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
+    # +++++++++++++++++++++++
+    # ## SOMATIC CNV
+    # +++++++++++++++++++++++
+    inputs += expand("%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.vcf.gz" % R_FOLDER, \
+        get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
+    inputs += expand("%s/calling/somatic_cnv_chr_arm/{tsample}_vs_{nsample}.tsv" % R_FOLDER, \
+        get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
+    inputs += expand("%s/calling/somatic_cnv_sum/{tsample}_vs_{nsample}.tsv" % R_FOLDER, \
+        get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
+    inputs += expand("%s/calling/somatic_cnv_table/{tsample}_vs_{nsample}.tsv" % R_FOLDER, \
+        get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
+    inputs += expand("%s/calling/somatic_cnv_gene_calls_unfiltered/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER, \
+        get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
+    inputs += expand("%s/calling/somatic_cnv_gene_calls_filtered/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER, \
+        get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
+    inputs += expand("%s/annotation/somatic_cna_oncokb/{tsample}_vs_{nsample}.tsv" % R_FOLDER, \
+        get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
+    inputs += expand("%s/annotation/somatic_cna_civic/{tsample}_vs_{nsample}.tsv" % R_FOLDER, \
+        get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
+    # inputs += ["%s/upload.done" % L_FOLDER]
+    # +++++++++++++++++++++++
+    #### AGGREGATE
+    # # +++++++++++++++++++++++
+    # "%s/aggregate/somatic_cna/somatic_calls_filters.tsv.gz" % R_FOLDER,
+    # "%s/aggregate/somatic_cna/somatic_calls.tsv.gz" % R_FOLDER,
+    # "%s/aggregate/somatic_cna/somatic_calls_oncokb.tsv.gz" % R_FOLDER,
+    # "%s/aggregate/somatic_cna/somatic_calls_civic.tsv.gz" % R_FOLDER,
+    # "%s/aggregate/somatic_cna/somatic_calls_union_ann.tsv.gz" % R_FOLDER,
+    # "%s/aggregate/somatic_cna/somatic_calls_summary_statistics.tsv.gz" % R_FOLDER,
+    # "%s/aggregate/somatic_cna/somatic_calls_per_chr_arm.tsv.gz" % R_FOLDER
+    return inputs
+
+
 rule all:
     input:
-        # +++++++++++++++++++++++
-        #### MAPPING
-        # +++++++++++++++++++++++
-        # expand("%s/mapping/{sample}.bam" % R_FOLDER, sample=samples),
-        # expand("%s/mapping/{sample}.bai" % R_FOLDER, sample=samples),
-        # expand(snp_pileup="%s/calling/somatic_snp_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER,
-        #        get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
-        # +++++++++++++++++++++++
-        # ## SOMATIC CNV
-        # +++++++++++++++++++++++
-        expand("%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.vcf.gz" % R_FOLDER,
-               get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
-        expand("%s/calling/somatic_cnv_table/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER,
-                  get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
-        expand("%s/calling/somatic_cnv_bed/{tsample}_vs_{nsample}.bed.gz" % R_FOLDER,
-                  get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
-        expand("%s/calling/somatic_cnv_calls/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER,
-               get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
-        expand("%s/calling/somatic_cnv_chr_arm/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
-               get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
-        expand("%s/calling/somatic_cnv_sum/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
-               get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
-        expand("%s/annotation/somatic_cna_oncokb_filter/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
-               get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
-        expand("%s/annotation/somatic_cna_civic_filter/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
-               get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
-        "%s/upload.done" % L_FOLDER,
-        "%s/remove_bams.done" % L_FOLDER,
-        # +++++++++++++++++++++++
-        #### AGGREGATE
-        # # +++++++++++++++++++++++
-        # "%s/aggregate/somatic_cna/somatic_calls_filters.tsv.gz" % R_FOLDER,
-        # "%s/aggregate/somatic_cna/somatic_calls.tsv.gz" % R_FOLDER,
-        # "%s/aggregate/somatic_cna/somatic_calls_oncokb.tsv.gz" % R_FOLDER,
-        # "%s/aggregate/somatic_cna/somatic_calls_civic.tsv.gz" % R_FOLDER,
-        # "%s/aggregate/somatic_cna/somatic_calls_union_ann.tsv.gz" % R_FOLDER,
-        # "%s/aggregate/somatic_cna/somatic_calls_summary_statistics.tsv.gz" % R_FOLDER,
-        # "%s/aggregate/somatic_cna/somatic_calls_per_chr_arm.tsv.gz" % R_FOLDER
-
+        get_input_rule_all
 
 ##### Modules #####
 

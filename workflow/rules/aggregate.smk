@@ -33,63 +33,6 @@ rule somatic_ppy_aggregate:
 #### Copy number variants ####
 ####
 
-rule somatic_cna_filters_aggregate:
-    input:
-        expand("%s/calling/somatic_cnv_bed/{tsample}_vs_{nsample}.bed.gz" % R_FOLDER,
-            get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
-    output:
-        "%s/aggregate/somatic_cna/somatic_calls_filters.tsv.gz" % R_FOLDER
-    benchmark:
-        "%s/aggregate/somatic_cna_filters/somatic_cna_filters_aggregate.tsv" % B_FOLDER
-    log:
-        "%s/aggregate/somatic_cna_filters/somatic_cna_filters_aggregate.log" % L_FOLDER
-    conda:
-        "../envs/python.yaml"
-    params:
-        threshold=config["params"]["cnv"]["calls_threshold"]
-    threads: 1
-    resources:
-        queue="shortq",
-        mem_mb=16000,
-        time_min=60
-    shell:
-        """
-        python -u workflow/scripts/04.4_concatenate_somatic_cnv.py \
-            --cnv {input} \
-            --threshold {params.threshold} \
-            --output {output} &> {log}
-        """
-
-
-
-rule somatic_cna_aggregate:
-    input:
-        expand("%s/calling/somatic_cnv_calls/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER,
-            get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
-    output:
-        "%s/aggregate/somatic_cna/somatic_calls.tsv.gz" % R_FOLDER
-    benchmark:
-        "%s/aggregate/somatic_cna/somatic_cna_aggregate.tsv" % B_FOLDER
-    log:
-        "%s/aggregate/somatic_cna/somatic_cna_aggregate.log" % L_FOLDER
-    conda:
-        "../envs/python.yaml"
-    params:
-        threshold=config["params"]["cnv"]["calls_threshold"]
-    threads: 1
-    resources:
-        queue="shortq",
-        mem_mb=16000,
-        time_min=60
-    shell:
-        """
-        python -u workflow/scripts/04.4_concatenate_somatic_cnv.py \
-            --cnv {input} \
-            --threshold {params.threshold} \
-            --output {output} &> {log}
-        """
-
-
 rule somatic_cna_sum_aggregate:
     input:
         expand("%s/calling/somatic_cnv_sum/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
@@ -117,11 +60,8 @@ rule somatic_cna_sum_aggregate:
 
 rule somatic_cna_chr_arm_aggregate:
     input:
-        chr_arm=expand("%s/calling/somatic_cnv_chr_arm/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
+        expand("%s/calling/somatic_cnv_chr_arm/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
             get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
-        cnv_sum=expand("%s/calling/somatic_cnv_sum/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
-            get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
-        cln="config/tumor_normal_pairs.tsv",
         rules=config["params"]["cnv"]["chr_arm_rules"]
     output:
         "%s/aggregate/somatic_cna/somatic_calls_per_chr_arm.tsv.gz" % R_FOLDER
@@ -130,7 +70,32 @@ rule somatic_cna_chr_arm_aggregate:
     log:
         "%s/aggregate/somatic_cna/somatic_cna_chr_arm_aggregate.log" % L_FOLDER
     conda:
+        "../envs/main.yaml"
+    threads: 2
+    resources:
+        queue="shortq",
+        mem_mb=16000,
+        time_min=60
+    shell:
+        """
+        cat {input} | sed -n '1p;/^Tumor/ !p' | gzip > {output} 2> {log}
+        """
+
+
+rule somatic_cna_filters_aggregate:
+    input:
+        expand("%s/calling/somatic_cnv_gene_calls_unfiltered/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER,
+            get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
+    output:
+        "%s/aggregate/somatic_cna/somatic_calls_filters.tsv.gz" % R_FOLDER
+    benchmark:
+        "%s/aggregate/somatic_cna/somatic_cna_filters_aggregate.tsv" % B_FOLDER
+    log:
+        "%s/aggregate/somatic_cna/somatic_cna_filters_aggregate.log" % L_FOLDER
+    conda:
         "../envs/python.yaml"
+    params:
+        threshold=config["params"]["cnv"]["calls_threshold"]
     threads: 1
     resources:
         queue="shortq",
@@ -138,11 +103,37 @@ rule somatic_cna_chr_arm_aggregate:
         time_min=60
     shell:
         """
-        python -u workflow/scripts/04.5_concatenate_somatic_cnv_chr_arm.py \
-            --input_chr_arm {input.chr_arm} \
-            --input_cnv_sum {input.cnv_sum} \
-            --input_cln {input.cln} \
-            --rules {input.rules} \
+        python -u workflow/scripts/04.4_concatenate_somatic_cna_calls.py \
+            --cnv {input} \
+            --threshold {params.threshold} \
+            --output {output} &> {log}
+        """
+
+
+rule somatic_cna_calls_aggregate:
+    input:
+        expand("%s/calling/somatic_cnv_gene_calls_filtered/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER,
+            get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
+    output:
+        "%s/aggregate/somatic_cna/somatic_calls.tsv.gz" % R_FOLDER
+    benchmark:
+        "%s/aggregate/somatic_cna/somatic_cna_calls_aggregate.tsv" % B_FOLDER
+    log:
+        "%s/aggregate/somatic_cna/somatic_cna_calls_aggregate.log" % L_FOLDER
+    conda:
+        "../envs/python.yaml"
+    params:
+        threshold=config["params"]["cnv"]["calls_threshold"]
+    threads: 1
+    resources:
+        queue="shortq",
+        mem_mb=16000,
+        time_min=60
+    shell:
+        """
+        python -u workflow/scripts/04.4_concatenate_somatic_cna_calls.py \
+            --cnv {input} \
+            --threshold {params.threshold} \
             --output {output} &> {log}
         """
 

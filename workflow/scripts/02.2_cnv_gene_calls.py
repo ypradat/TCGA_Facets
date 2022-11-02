@@ -41,10 +41,10 @@ def read_table(path):
 
 
 def main(args):
-    if args.output.endswith(".bed.gz"):
-        pattern = ".bed.gz"
+    if args.output.endswith(".tsv.gz"):
+        pattern = ".tsv.gz"
     else:
-        pattern = ".bed"
+        pattern = ".tsv"
 
     bed_b = args.output.replace(pattern, "_b.bed")
     bed_i = args.output.replace(pattern, "_i.bed")

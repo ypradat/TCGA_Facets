@@ -80,7 +80,11 @@ def main(args):
     # add tumor and normal sample ids
     basename = os.path.basename(args.input_bed)
     tsample = basename.split("_vs_")[0]
-    nsample = basename.split("_vs_")[1].split(".bed")[0]
+
+    if basename.endswith(".bed"):
+        nsample = basename.split("_vs_")[1].split(".bed")[0]
+    else:
+        nsample = basename.split("_vs_")[1].split(".tsv")[0]
 
     df_cna.insert(0, "Tumor_Sample_Barcode", tsample)
     df_cna.insert(1, "Matched_Norm_Sample_Barcode", nsample)

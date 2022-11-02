@@ -23,6 +23,7 @@ params:
                 pro: 500
             gbuild: hg38
         chr_arm_rules: resources/facets_suite/facets_suite_arm_level_rules.xlsx
+        cna_cat_rules: resources/facets_suite/facets_scna_categories_rules.xlsx
     gatk:
         known_sites: resources/hg38_gatk/af-only-gnomad.hg38.vcf.gz
     oncokb:
@@ -33,3 +34,10 @@ params:
           cna: true
         token: 722c8d78-b8c0-408c-9ecb-4bd51354e93a
         rules_clean: resources/oncokb/OncoKB_Curation_And_Rules.xlsx
+
+# start_from should be one of
+# - 1: download_bam
+# - 2: get_snp_pileup
+# - 3: somatic_cnv_facets
+# - 4: somatic_cnv_process_vcf
+start_from: download_bam

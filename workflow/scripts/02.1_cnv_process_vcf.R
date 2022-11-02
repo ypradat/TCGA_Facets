@@ -542,15 +542,7 @@ main <- function(args){
 
   # build key to match with rules
   df_rules <- read_excel(args$rules_arm)
-
-  # first check if abolute or relative CN should be used
-  df_chr_arm <- left_join(df_chr_arm, df_rules[,c("WGD", "X_Male", "Ratio_To_Ploidy")] %>% distinct())
-  mask_ratio <- df_chr_arm[["Ratio_To_Ploidy"]]==1
-  mask_ratio[is.na(mask_ratio)] <- FALSE
-  df_chr_arm[["TCN_Key"]] <- df_chr_arm[["tcn"]]
-  df_chr_arm[mask_ratio, "TCN_Key"] <- df_chr_arm[mask_ratio, "tcn"]/df_chr_arm[mask_ratio, "Ploidy"]
-  df_chr_arm[["LCN_Key"]] <- df_chr_arm[["lcn"]]
-  df_chr_arm[mask_ratio, "LCN_Key"] <- df_chr_arm[mask_ratio, "lcn"]/df_chr_arm[mask_ratio, "Ploidy"]
+  df_chr_arm <- df_chr_arm %>% mutate(TCN_Key=`tcn`, LCN_Key=`lcn`)
 
   # select rules
   x <- out_wgd$wgd
@@ -560,11 +552,13 @@ main <- function(args){
     df_rules <- df_rules %>% filter(WGD!=0)
   }
 
+  # replace ** by ^
+  df_rules$TCN <- gsub("\\*\\*", "\\^", df_rules$TCN)
+
   # execute rules line by line
   for (i in 1:nrow(df_rules)){
     rule <- df_rules[i,]
-    mask_rule <- df_chr_arm$WGD==rule$WGD
-    mask_rule <- mask_rule & (df_chr_arm$X_Male==rule$X_Male)
+    mask_rule <- df_chr_arm$X_Male==rule$X_Male
     for (cn in c("TCN", "LCN")){
       if (rule[[cn]] != "NA" & !is.na(rule[[cn]])){
         if (is.character(rule[[cn]]) & grepl(",", rule[[cn]])){
@@ -582,8 +576,8 @@ main <- function(args){
         }
       }
     }
-
     mask_rule[is.na(mask_rule)] <- FALSE
+
     df_chr_arm[mask_rule, "copy_number"] <- rule[["State"]]
     df_chr_arm[mask_rule, "copy_number_more"] <- rule[["State_More"]]
   }

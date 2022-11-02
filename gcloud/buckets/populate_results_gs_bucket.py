@@ -28,7 +28,7 @@ def main(args):
     supfolders_gs = ["%s/%s" % (args.bucket_gs_uri, x) for x in ["results", "logs", "benchmarks"]]
     midfolders = ["calling", "annotation"]
 
-    subfolders = ["somatic_cnv_chr_arm", "somatic_cnv_sum", "somatic_cnv_table",
+    subfolders = ["somatic_cnv_process_vcf", "somatic_cnv_chr_arm", "somatic_cnv_sum", "somatic_cnv_table",
                   "somatic_cnv_gene_calls_unfiltered", "somatic_cnv_gene_calls_filtered",
                   "somatic_cna_civic", "somatic_cna_oncokb"]
 

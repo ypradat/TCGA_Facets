@@ -387,4 +387,4 @@ if [[ ${status_failed_cur} != 0 ]]; then
 fi
 
 # delete instance
-# gcloud compute instances delete $(hostname) --zone=${zone} --delete-disks=all --quiet
+gcloud compute instances delete $(hostname) --zone=${zone} --delete-disks=all --quiet

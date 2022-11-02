@@ -39,7 +39,7 @@ def get_input_rule_all(w):
         get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
     inputs += expand("%s/annotation/somatic_cna_civic/{tsample}_vs_{nsample}.tsv" % R_FOLDER, \
         get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
-    # inputs += ["%s/upload.done" % L_FOLDER]
+    inputs += ["%s/upload.done" % L_FOLDER]
     # +++++++++++++++++++++++
     #### AGGREGATE
     # # +++++++++++++++++++++++

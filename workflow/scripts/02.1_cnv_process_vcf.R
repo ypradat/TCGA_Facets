@@ -389,7 +389,12 @@ main <- function(args){
   est_insert_size <- extract_from_header(vcf_header, "est_insert_size")
 
   # remove prefix if any
-  df_cnv_tab <- df_cnv_tab %>% mutate(chrom=gsub("^chr", "", chrom))
+  if (grepl("^chr", df_cnv_tab$chrom[1])){
+    chr_prefix <- T
+    df_cnv_tab <- df_cnv_tab %>% mutate(chrom=gsub("^chr", "", chrom))
+  } else {
+    chr_prefix <- F
+  }
 
   # undo renaming by cnv_facets to have only numeric chromosome names
   df_cnv_tab[df_cnv_tab$chrom == 'X', "chrom"] <- "23"
@@ -496,6 +501,11 @@ main <- function(args){
 
     df_cnv_tab[mask_rule, "copy_number"] <- rule[["State"]]
     df_cnv_tab[mask_rule, "copy_number_more"] <- rule[["State_More"]]
+  }
+
+  # if 'chr' prefix was present, set it back
+  if (chr_prefix){
+    df_cnv_tab$chrom <- paste0("chr", df_cnv_tab$chrom)
   }
 
   # compute in-house CNA scores ========================================================================================

@@ -144,7 +144,7 @@ EOF
 --provisioning-model=spot \
 --preemptible \
 --metadata-from-file=startup-script=./gcloud/instances/startup_instance.sh,shutdown-script=./gcloud/instances/shutdown_instance.sh \
---metadata=batch_index=${batch_index}
+--metadata=batch_index=${batch_index},start_from=${start_from}
 EOF
     else
         # Create the instance and run the pipeline via the startup script
@@ -160,7 +160,7 @@ EOF
             --scopes=https://www.googleapis.com/auth/compute,https://www.googleapis.com/auth/devstorage.read_write,https://www.googleapis.com/auth/logging.admin,https://www.googleapis.com/auth/monitoring.write,https://www.googleapis.com/auth/servicecontrol,https://www.googleapis.com/auth/service.management,https://www.googleapis.com/auth/trace.append \
             --enable-display-device \
             --tags=https-server \
-            --create-disk=auto-delete=yes,boot=yes,device-name=${device_name},image=projects/debian-cloud/global/images/debian-11-bullseye-v20220920,mode=rw,size=${instance_size},type=projects/isb-cgc-external-001/zones/us-central1-a/disktypes/pd-balanced \
+            --create-disk=auto-delete=yes,boot=yes,device-name=${device_name},image=projects/debian-cloud/global/images/debian-11-bullseye-v20220920,mode=rw,size=${instance_size},type=projects/isb-cgc-external-001/zones/us-central1-a/diskTypes/pd-balanced \
             --no-shielded-secure-boot \
             --shielded-vtpm \
             --shielded-integrity-monitoring \

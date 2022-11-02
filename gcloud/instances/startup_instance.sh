@@ -158,7 +158,7 @@ fi
 if ! grep -R '^start_from:' config/config.yaml > /dev/null ; then
     printf "start_from: %s" "${start_from}" >> config/config.yaml
 else
-    sed -i -e "s/start_from:.*/start_form: ${start_from}" config/config.yaml
+    sed -i -e "s/start_from:.*/start_form: ${start_from}/" config/config.yaml
 fi
 
 # install conda and mamba

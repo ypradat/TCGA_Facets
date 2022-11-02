@@ -15,8 +15,7 @@ def get_input_rule_all(w):
     #### MAPPING
     # +++++++++++++++++++++++
     if config["start_from"] in ["download_bam", "get_snp_pileup"]:
-        inputs += expand("%s/mapping/{sample}.bam" % R_FOLDER, sample=samples)
-        inputs += expand("%s/mapping/{sample}.bai" % R_FOLDER, sample=samples)
+        inputs += expand("%s/mapping/download_bam_{sample}.done" % L_FOLDER, sample=samples)
         inputs += ["%s/remove_bams.done" % L_FOLDER]
     if config["start_from"] in ["get_snp_pileup"]:
         inputs += expand("%s/calling/somatic_snp_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER, \

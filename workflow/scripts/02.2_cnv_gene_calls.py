@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @created: Feb 01 2022
-@modified: Feb 01 2022
+@modified: Nov 03 2022
 @author: Yoann Pradat
 
     CentraleSupelec
@@ -53,7 +53,8 @@ def main(args):
     df_tab = read_table(args.input_tab)
 
     # make bed from tab
-    cols_bed = ["chrom", "start", "end", "tcn.em", "lcn.em", "svtype", "svlen", "copy_number", "copy_number_more"]
+    cols_bed = ["chrom", "start", "end", "tcn.em", "lcn.em", "svtype", "svlen", "copy_number", "copy_number_more"] + \
+            ["Tumor_Sample_Barcode", "Matched_Norm_Sample_Barcode"]
     df_bed = df_tab[cols_bed].copy()
     for col in ["tcn.em", "lcn.em"]:
         df_bed[col] = df_bed[col].apply(lambda x: "%d" % x if not np.isnan(x) else x)
@@ -84,7 +85,7 @@ def main(args):
     # select columns keep
     cols_keep = ["chrom_gene", "start_gene", "end_gene", "gene_id", "gene_name", "gene_biotype", "gene_source",
                  "tcn.em", "lcn.em", "overlap", "svtype", "svstart", "svend", "svlen", "copy_number",
-                 "copy_number_more"]
+                 "copy_number_more", "Tumor_Sample_Barcode", "Matched_Norm_Sample_Barcode"]
     cols_old2new = {"chrom_gene": "chrom", "start_gene": "start", "end_gene": "end", "gene_name": "gene"}
 
     df_bed_o = df_bed_i[cols_keep]

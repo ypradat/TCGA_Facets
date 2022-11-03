@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @created: Apr 28 2022
-@modified: Oct 03 2022
+@modified: Nov 03 2022
 @author: Yoann Pradat
 
     CentraleSupelec
@@ -64,7 +64,7 @@ def main(args):
         df_cna[col] = df_cna[col].apply(convert_num_to_str).fillna("NA").astype(str)
     df_cna["TCN_EM:LCN_EM"] = df_cna[["tcn.em", "lcn.em"]].apply(":".join, axis=1)
 
-    cols_gby = ["Hugo_Symbol", "Chromosome"]
+    cols_gby = ["Tumor_Sample_Barcode", "Matched_Norm_Sample_Barcode", "Hugo_Symbol", "Chromosome"]
     cols_agg = ["Copy_Number", "Copy_Number_More", "TCN_EM:LCN_EM", "svtype", "svlen", "svstart", "svend", "overlap"]
     dt_agg = {x: ";".join for x in cols_agg}
 
@@ -76,18 +76,6 @@ def main(args):
         df_cna = df_cna.groupby(cols_gby).agg(dt_agg).reset_index()
     else:
         df_cna = df_cna[cols_gby + cols_agg]
-
-    # add tumor and normal sample ids
-    basename = os.path.basename(args.input_bed)
-    tsample = basename.split("_vs_")[0]
-
-    if basename.endswith(".bed"):
-        nsample = basename.split("_vs_")[1].split(".bed")[0]
-    else:
-        nsample = basename.split("_vs_")[1].split(".tsv")[0]
-
-    df_cna.insert(0, "Tumor_Sample_Barcode", tsample)
-    df_cna.insert(1, "Matched_Norm_Sample_Barcode", nsample)
 
     df_cna.to_csv(args.output, sep="\t", index=False)
     print("-filed saved at %s" % args.output)

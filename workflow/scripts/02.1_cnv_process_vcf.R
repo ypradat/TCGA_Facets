@@ -1,5 +1,5 @@
 # created: Oct 03 2022
-# modified: Oct 31 2022
+# modified: Nov 03 2022
 # author: Yoann Pradat
 # 
 #     CentraleSupelec
@@ -513,6 +513,14 @@ main <- function(args){
   if (chr_prefix){
     df_cnv_tab$chrom <- paste0("chr", df_cnv_tab$chrom)
   }
+  
+  # add columns ids and remove columsn added for calling
+  df_cnv_tab <- bind_cols(data.frame(Tumor_Sample_Barcode=rep(tumor_sample, nrow(df_cnv_tab)),
+                                     Matched_Norm_Sample_Barcode=rep(normal_sample, nrow(df_cnv_tab))),
+                          df_cnv_tab)
+
+  # remove columns added for calling
+  df_cnv_tab <- df_cnv_tab %>% select(-WGD, -Ploidy, -TCN_Key, -LCN_Key, -Gender, -X_Male)
 
   # compute in-house CNA scores ========================================================================================
   out_genome_fractions <- calculate_genome_fractions(df_cnv_tab, genome)

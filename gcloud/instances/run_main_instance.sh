@@ -1,20 +1,18 @@
 #!/bin/bash
 
-while getopts ":a:b:" opt; do
-    case $opt in
-	a) main_min="$OPTARG"
-	    ;;
-	b) main_max="$OPTARG"
-	    ;;
-	\?) echo "Invalid option -$OPTARG" >&2
-	    exit 1
-	    ;;
-    esac
+usage() { echo "$0 Usage:" && grep " .)\ #" $0; exit 0; }
 
-    case $OPTARG in
-	-*) echo "Option $opt needs a valid argument"
-	    exit 1
-	    ;;
+while getopts ":a:b h" opt; do
+    case $opt in
+        a) # Minimum main index to be run.
+            main_min="$OPTARG"
+            ;;
+        b) # Maximum main index to be run.
+            main_max="$OPTARG"
+            ;;
+        h) # Display help.
+            usage
+            ;;
     esac
 done
 

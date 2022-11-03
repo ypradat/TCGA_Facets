@@ -5,7 +5,7 @@ usage() { echo "$0 Usage:" && grep " .)\ #" $0; exit 0; }
 dry_run="no"
 skip_bam_copy="no"
 
-while getopts ":a:b:i:f::ns" opt; do
+while getopts ":a:b:i:f::ns h" opt; do
     case $opt in
         a) # Minimum batch index to be run. Ignored if -i is used.
             batch_min="$OPTARG"

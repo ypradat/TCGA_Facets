@@ -13,6 +13,10 @@ while getopts ":a:b h" opt; do
         h) # Display help.
             usage
             ;;
+        *) echo "Invalid option -$OPTARG" >&2
+            usage
+            exit 1
+            ;;
     esac
 done
 

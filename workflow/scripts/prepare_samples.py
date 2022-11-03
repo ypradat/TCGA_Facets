@@ -2,6 +2,21 @@ import argparse
 import numpy as np
 import pandas as pd
 
+
+def add_pairs_from_sub(df_tnp_sub, cum_batch_size, cum_file_size, i_tnp_seen, r_tnp_batches, dry_run=False):
+    for i_tnp_sub, (_, r_tnp_sub) in zip(df_tnp_sub.index, df_tnp_sub.iterrows()):
+        cum_batch_size += 1
+        cum_file_size += r_tnp_sub["File_Size_P"]
+
+        if not dry_run:
+            i_tnp_seen.append(i_tnp_sub)
+            r_tnp_batch = r_tnp_sub.copy().to_dict()
+            r_tnp_batch["Batch"] = i_batch
+            r_tnp_batches.append(r_tnp_batch)
+
+    return cum_batch_size, cum_file_size
+
+
 def main(args):
     # read samples data
     filepath = "../../data/tcga/clinical/curated_other/bio_tcga_all_curated.tsv"
@@ -79,19 +94,6 @@ def main(args):
     #   same subject.
     df_tnp["Batch"] = np.nan
 
-    def add_pairs_from_sub(df_tnp_sub, cum_batch_size, cum_file_size, i_tnp_seen, r_tnp_batches, dry_run=False):
-        for i_tnp_sub, (_, r_tnp_sub) in zip(df_tnp_sub.index, df_tnp_sub.iterrows()):
-            cum_batch_size += 1
-            cum_file_size += r_tnp_sub["File_Size_P"]
-
-            if not dry_run:
-                i_tnp_seen.append(i_tnp_sub)
-                r_tnp_batch = r_tnp_sub.copy().to_dict()
-                r_tnp_batch["Batch"] = i_batch
-                r_tnp_batches.append(r_tnp_batch)
-
-        return cum_batch_size, cum_file_size
-
     i_batch = 1
     cum_batch_size = 0
     cum_file_size = 0
@@ -152,7 +154,7 @@ if __name__ == "__main__":
     parser.add_argument("--out_tnp", type=str, help="Path to table of tumor/normal pairs.",
                         default="config/tumor_normal_pairs.all.tsv")
     parser.add_argument("--max_batch_size", type=int, help="Max number of tumor/normal pairs for one batch.",
-                        default=4)
+                        default=50)
     args = parser.parse_args()
 
     main(args)

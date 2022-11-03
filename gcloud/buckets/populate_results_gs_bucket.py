@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @created: Oct 11 2022
-@modified: Nov 02 2022
+@modified: Nov 03 2022
 @author: Yoann Pradat
 
     CentraleSupelec
@@ -19,6 +19,8 @@ import argparse
 import os
 import pandas as pd
 import subprocess
+from multiprocessing import Pool
+from tqdm import tqdm
 
 # functions ============================================================================================================
 
@@ -35,6 +37,7 @@ def main(args):
     if args.start_from in ["download_bam", "get_snp_pileup", "somatic_cnv_facets"]:
         subfolders = ["somatic_cnv_facets"] + subfolders
 
+    cmds_cp = []
     for supfolder_vm, supfolder_gs in zip(supfolders_vm, supfolders_gs):
         if os.path.exists(supfolder_vm):
             for midfolder in midfolders:
@@ -49,8 +52,7 @@ def main(args):
                             filepaths_gs = [os.path.join(folder_gs, file_vm) for file_vm in files_vm]
                             for filepath_vm, filepath_gs in zip(filepaths_vm, filepaths_gs):
                                 cmd_cp = "gsutil cp %s %s" % (filepath_vm, filepath_gs)
-                                subprocess.run(cmd_cp, shell=True)
-                                print("-copied file %s to bucket" % filepath_vm)
+                                cmds_cp.append(cmd_cp)
 
     # upload VM log
     home = "/home/ypradat"
@@ -58,8 +60,18 @@ def main(args):
     filepath_vm = os.path.join(home, vm_log)
     filepath_gs = os.path.join(args.bucket_gs_uri, "logs/gcloud", vm_log)
     cmd_cp = "gsutil cp %s %s" % (filepath_vm, filepath_gs)
-    subprocess.run(cmd_cp, shell=True)
-    print("-copied file %s to bucket" % filepath_vm)
+    cmds_cp.append(cmd_cp)
+
+    # run all commands as efficiently as possible, and track with progress bar
+    task = lambda cmd: subprocess.run(cmd, shell=True)
+    progress_bar = tqdm(total=len(cmds_cp))
+    update_progress_bar = lambda _:  progress_bar.update()
+
+    pool = Pool(args.num_threads)
+    for cmd_cp in cmds_cp:
+        pool.apply_async(task, (cmd_cp,), callback=update_progress_bar)
+    pool.close()
+    pool.join()
 
 
 # run ==================================================================================================================
@@ -70,6 +82,7 @@ if __name__ == "__main__":
                         default="gs://facets_tcga_results")
     parser.add_argument('--start_from', type=str, help='Rule name from which the pipeline started.',
                         default="download_bam")
+    parser.add_argument('--num_threads', type=int, help='Number of threads that can be used to run rules in parallel.')
     args = parser.parse_args()
 
     for arg in vars(args):

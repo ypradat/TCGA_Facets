@@ -27,8 +27,8 @@ rule upload_results:
         "%s/upload/upload_results.tsv" % B_FOLDER
     resources:
         mem_mb=1000,
-        time_min=30
-    threads: 2
+        time_min=60
+    threads: 8
     params:
         gs_res_bucket="%s/%s" % (config["gcloud"]["gs_res_bucket"], "results"),
         start_from=config["start_from"]
@@ -36,5 +36,6 @@ rule upload_results:
         """
         python -u gcloud/buckets/populate_results_gs_bucket.py \
             --bucket_gs_uri {params.gs_res_bucket} \
-            --start_from {params.start_from} &> {log}
+            --start_from {params.start_from}
+            --num_threads {threads} &> {log}
         """

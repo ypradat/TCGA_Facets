@@ -37,7 +37,7 @@ def main(args):
     if args.start_from in ["download_bam", "get_snp_pileup", "somatic_cnv_facets"]:
         subfolders = ["somatic_cnv_facets"] + subfolders
 
-    cmds_cp = []
+    cmds = []
     for supfolder_vm, supfolder_gs in zip(supfolders_vm, supfolders_gs):
         if os.path.exists(supfolder_vm):
             for midfolder in midfolders:
@@ -47,31 +47,20 @@ def main(args):
                         folder_vm = os.path.join(supfolder_vm, midfolder, subfolder)
                         folder_gs = os.path.join(supfolder_gs, midfolder, subfolder)
                         if os.path.exists(folder_vm):
-                            files_vm = os.listdir(folder_vm)
-                            filepaths_vm = [os.path.join(folder_vm, file_vm) for file_vm in files_vm]
-                            filepaths_gs = [os.path.join(folder_gs, file_vm) for file_vm in files_vm]
-                            for filepath_vm, filepath_gs in zip(filepaths_vm, filepaths_gs):
-                                cmd_cp = "gsutil cp %s %s" % (filepath_vm, filepath_gs)
-                                cmds_cp.append(cmd_cp)
+                            cmd = "gsutil -m rsync -r %s %s" % (folder_vm, folder_gs)
+                            cmds.append(cmd)
 
     # upload VM log
     home = "/home/ypradat"
     vm_log = [x for x in os.listdir(home) if x.startswith("startup_gcloud_vm")][0]
     filepath_vm = os.path.join(home, vm_log)
     filepath_gs = os.path.join(args.bucket_gs_uri, "logs/gcloud", vm_log)
-    cmd_cp = "gsutil cp %s %s" % (filepath_vm, filepath_gs)
-    cmds_cp.append(cmd_cp)
+    cmd = "gsutil cp %s %s" % (filepath_vm, filepath_gs)
+    cmds.append(cmd)
 
-    # run all commands as efficiently as possible, and track with progress bar
-    task = lambda cmd: subprocess.run(cmd, shell=True)
-    progress_bar = tqdm(total=len(cmds_cp))
-    update_progress_bar = lambda _:  progress_bar.update()
-
-    pool = Pool(args.num_threads)
-    for cmd_cp in cmds_cp:
-        pool.apply_async(task, (cmd_cp,), callback=update_progress_bar)
-    pool.close()
-    pool.join()
+    # run all commands
+    for cmd in cmds:
+        subprocess.run(cmd, shell=True)
 
 
 # run ==================================================================================================================
@@ -82,7 +71,6 @@ if __name__ == "__main__":
                         default="gs://facets_tcga_results")
     parser.add_argument('--start_from', type=str, help='Rule name from which the pipeline started.',
                         default="download_bam")
-    parser.add_argument('--num_threads', type=int, help='Number of threads that can be used to run rules in parallel.')
     args = parser.parse_args()
 
     for arg in vars(args):

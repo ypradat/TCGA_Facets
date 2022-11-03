@@ -20,7 +20,6 @@ import os
 import pandas as pd
 import subprocess
 from multiprocessing import Pool
-from tqdm import tqdm
 
 # functions ============================================================================================================
 

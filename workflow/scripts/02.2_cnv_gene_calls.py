@@ -83,9 +83,9 @@ def main(args):
     df_bed_i = df_bed_i.rename(columns=cols_old2new)
 
     # select columns keep
-    cols_keep = ["chrom_gene", "start_gene", "end_gene", "gene_id", "gene_name", "gene_biotype", "gene_source",
-                 "tcn.em", "lcn.em", "overlap", "svtype", "svstart", "svend", "svlen", "copy_number",
-                 "copy_number_more", "Tumor_Sample_Barcode", "Matched_Norm_Sample_Barcode"]
+    cols_keep = ["Tumor_Sample_Barcode", "Matched_Norm_Sample_Barcode", "chrom_gene", "start_gene", "end_gene",
+                 "gene_id", "gene_name", "gene_biotype", "gene_source", "tcn.em", "lcn.em", "overlap", "svtype",
+                 "svstart", "svend", "svlen", "copy_number", "copy_number_more"]
     cols_old2new = {"chrom_gene": "chrom", "start_gene": "start", "end_gene": "end", "gene_name": "gene"}
 
     df_bed_o = df_bed_i[cols_keep]

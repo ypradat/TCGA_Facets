@@ -30,12 +30,13 @@ rule upload_results:
         time_min=60
     threads: 8
     params:
-        gs_res_bucket="%s/%s" % (config["gcloud"]["gs_res_bucket"], "results"),
+        # gs_res_bucket=config["gcloud"]["gs_res_bucket"],
+        gs_res_bucket="%s/results" % config["gcloud"]["gs_res_bucket"],
         start_from=config["start_from"]
     shell:
         """
         python -u gcloud/buckets/populate_results_gs_bucket.py \
             --bucket_gs_uri {params.gs_res_bucket} \
-            --start_from {params.start_from}
+            --start_from {params.start_from} \
             --num_threads {threads} &> {log}
         """

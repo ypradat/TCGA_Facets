@@ -33,31 +33,6 @@ rule somatic_ppy_aggregate:
 #### Copy number variants ####
 ####
 
-rule somatic_cna_sum_aggregate:
-    input:
-        expand("%s/calling/somatic_cnv_sum/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
-            get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
-    output:
-        "%s/aggregate/somatic_cna/somatic_calls_summary_statistics.tsv.gz" % R_FOLDER
-    benchmark:
-        "%s/aggregate/somatic_cna/somatic_cna_sum_aggregate.tsv" % B_FOLDER
-    log:
-        "%s/aggregate/somatic_cna/somatic_cna_sum_aggregate.log" % L_FOLDER
-    conda:
-        "../envs/python.yaml"
-    threads: 1
-    resources:
-        queue="shortq",
-        mem_mb=16000,
-        time_min=60
-    shell:
-        """
-        python -u workflow/scripts/04.1_concatenate_tables.py \
-            --input {input} \
-            --output {output} &> {log}
-        """
-
-
 rule somatic_cna_chr_arm_aggregate:
     input:
         expand("%s/calling/somatic_cnv_chr_arm/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
@@ -69,8 +44,6 @@ rule somatic_cna_chr_arm_aggregate:
         "%s/aggregate/somatic_cna/somatic_cna_chr_arm_aggregate.tsv" % B_FOLDER
     log:
         "%s/aggregate/somatic_cna/somatic_cna_chr_arm_aggregate.log" % L_FOLDER
-    conda:
-        "../envs/main.yaml"
     threads: 2
     resources:
         queue="shortq",
@@ -80,6 +53,48 @@ rule somatic_cna_chr_arm_aggregate:
         """
         cat {input} | sed -n '1p;/^Tumor/ !p' | gzip > {output} 2> {log}
         """
+
+
+rule somatic_cna_sum_aggregate:
+    input:
+        expand("%s/calling/somatic_cnv_sum/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
+            get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
+    output:
+        "%s/aggregate/somatic_cna/somatic_calls_summary_statistics.tsv.gz" % R_FOLDER
+    benchmark:
+        "%s/aggregate/somatic_cna/somatic_cna_sum_aggregate.tsv" % B_FOLDER
+    log:
+        "%s/aggregate/somatic_cna/somatic_cna_sum_aggregate.log" % L_FOLDER
+    threads: 1
+    resources:
+        queue="shortq",
+        mem_mb=16000,
+        time_min=60
+    shell:
+        """
+        cat {input} | sed -n '1p;/^Tumor/ !p' | gzip > {output} 2> {log}
+        """
+
+
+rule somatic_cna_table_aggregate:
+    input:
+        expand("%s/calling/somatic_cnv_table/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
+            get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
+    output:
+        "%s/aggregate/somatic_cna/somatic_segments.tsv.gz" % R_FOLDER
+    benchmark:
+        "%s/aggregate/somatic_cna/somatic_cna_table_aggregate.tsv" % B_FOLDER
+    log:
+        "%s/aggregate/somatic_cna/somatic_cna_table_aggregate.log" % L_FOLDER
+    threads: 1
+    resources:
+        queue="shortq",
+        mem_mb=16000,
+        time_min=60
+    shell:
+        """
+        cat {input} | sed -n '1p;/^Tumor/ !p' | gzip > {output} 2> {log}
+	"""
 
 
 rule somatic_cna_filters_aggregate:

@@ -43,6 +43,7 @@ def get_input_rule_all(w):
     # +++++++++++++++++++++++
     #### AGGREGATE
     # # +++++++++++++++++++++++
+    # "%s/aggregate/somatic_cna/somatic_segments.tsv.gz" % R_FOLDER,
     # "%s/aggregate/somatic_cna/somatic_calls_filters.tsv.gz" % R_FOLDER,
     # "%s/aggregate/somatic_cna/somatic_calls.tsv.gz" % R_FOLDER,
     # "%s/aggregate/somatic_cna/somatic_calls_oncokb.tsv.gz" % R_FOLDER,

@@ -610,9 +610,9 @@ main <- function(args){
   df_chr_arm[mask_null, "copy_number_more"] <- "NEUTR"
 
   # save results =======================================================================================================
-  # write.table(df_chr_arm, file=args$output_arm, row.names=F, sep="\t", quote=F)
-  # write.table(df_cna_sum, file=args$output_sum, row.names=F, sep="\t", quote=F)
-  # write.table(df_cnv_tab, file=args$output_tab, row.names=F, sep="\t", quote=F)
+  write.table(df_chr_arm, file=args$output_arm, row.names=F, sep="\t", quote=F)
+  write.table(df_cna_sum, file=args$output_sum, row.names=F, sep="\t", quote=F)
+  write.table(df_cnv_tab, file=args$output_tab, row.names=F, sep="\t", quote=F)
 }
 
 # run ==================================================================================================================

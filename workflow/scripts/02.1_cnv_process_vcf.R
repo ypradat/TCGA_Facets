@@ -387,7 +387,12 @@ main <- function(args){
   ploidy <- extract_from_header(vcf_header, "ploidy")
   dipLogR <- extract_from_header(vcf_header, "dipLogR")
   est_insert_size <- extract_from_header(vcf_header, "est_insert_size")
-  emflags <- trimws(extract_from_header(vcf_header, "emflags", as_numeric=F))
+  emflags <- extract_from_header(vcf_header, "emflags", as_numeric=F)
+  if (!is.null(emflags)){
+    emflags <- trimws(emflags)
+  } else {
+    emflags <- NA
+  }
 
   # remove prefix if any
   if (grepl("^chr", df_cnv_tab$chrom[1])){

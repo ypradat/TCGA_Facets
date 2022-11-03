@@ -249,12 +249,21 @@ status_failed_third_oom=$?
 
 if [[ ${status_failed_second} != 0 ]] && [[ ${status_failed_first} != 0 ]] && [[ ${status_failed_third_oom} != 0 ]]; then
     # first time this batch is run, try to run the maximum number of jobs in parallel
-    load=115
-    jobs=50
+    if [[ ${start_from} =~ ^(download_bam|get_snp_pileup|somatic_cnv_facets)$ ]]; then
+	load=115
+	jobs=50
+    else
+	load=8
+	jobs=8
+    fi
 elif [[ ${status_failed_first} == 0 ]]; then
-    # second time this batch is run, reduce the maximum number of jobs that can run in parallel
-    load=65
-    jobs=50
+    if [[ ${start_from} =~ ^(download_bam|get_snp_pileup|somatic_cnv_facets)$ ]]; then
+	load=115
+	jobs=50
+    else
+	load=4
+	jobs=4
+    fi
 
     # log message
     gcloud logging write ${gcloud_log_name} \
@@ -266,8 +275,13 @@ elif [[ ${status_failed_first} == 0 ]]; then
     gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
 elif [[ ${status_failed_second} == 0 ]] ; then
     # third time this batch is run, reduce the maximum number of jobs that can run in parallel to 1
-    load=65
-    jobs=1
+    if [[ ${start_from} =~ ^(download_bam|get_snp_pileup|somatic_cnv_facets)$ ]]; then
+	load=65
+	jobs=1
+    else
+	load=1
+	jobs=1
+    fi
 
     # log message
     gcloud logging write ${gcloud_log_name} \

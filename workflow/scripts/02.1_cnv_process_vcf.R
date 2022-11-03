@@ -410,6 +410,10 @@ main <- function(args){
   # compute chromsome arm CNA
   out_arm_level <- arm_level_changes(df_cnv_tab, ploidy, genome="hg19", algorithm="em")
 
+  # build table of summary statistics
+  tumor_sample <- gsub("_vs_.*$", "", basename(args$input_vcf))
+  normal_sample <- gsub(".vcf.gz$", "", gsub("^.*_vs_", "", basename(args$input_vcf)))
+
   # extract CNA scores from facetsSuite ================================================================================
   out_genome_doubled <- out_arm_level$genome_doubled
   out_fraction_cna <- out_arm_level$fraction_cna
@@ -525,10 +529,6 @@ main <- function(args){
   # compute in-house CNA scores ========================================================================================
   out_genome_fractions <- calculate_genome_fractions(df_cnv_tab, genome)
   out_wgd <- calculate_wgd(df_cnv_tab, genome)
-
-  # build table of summary statistics
-  tumor_sample <- gsub("_vs_.*$", "", basename(args$input_vcf))
-  normal_sample <- gsub(".vcf.gz$", "", gsub("^.*_vs_", "", basename(args$input_vcf)))
 
   # build table of summary statistics
   df_cna_sum <- data.frame(Tumor_Sample_Barcode=tumor_sample,

@@ -396,7 +396,8 @@ if [[ ${status_failed_cur} != 0 ]]; then
 
     # upload whatever was done
     python -u gcloud/buckets/populate_results_gs_bucket.py \
-      --bucket_gs_uri "gs://facets_tcga_results"
+      --bucket_gs_uri "gs://facets_tcga_results" \
+      --start_from ${start_from}
   fi 
 fi
 

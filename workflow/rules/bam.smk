@@ -4,9 +4,9 @@ if config["start_from"]=="download_bam":
     # will be skipped and the missing BAM files will be download by 01.2_get_snp_pileup.sh
     rule download_bam:
         log:
-            "%s/mapping/gdc_get_bam_{sample}.log" % L_FOLDER
+            "%s/mapping/download_bam/{sample}.log" % L_FOLDER
         benchmark:
-            "%s/mapping/gdc_get_bam_{sample}.tsv" % B_FOLDER
+            "%s/mapping/download_bam/{sample}.tsv" % B_FOLDER
         input:
             table=config["samples"]
         params:
@@ -58,9 +58,9 @@ if config["start_from"] in ["download_bam", "get_snp_pileup"]:
     # Get snp pileup table
     rule get_snp_pileup:
         log:
-            "%s/mapping/get_snp_pileup_{tsample}_vs_{nsample}.log" % L_FOLDER
+            "%s/mapping/get_snp_pileup/{tsample}_vs_{nsample}.log" % L_FOLDER
         benchmark:
-            "%s/mapping/get_snp_pileup_{tsample}_vs_{nsample}.tsv" % B_FOLDER
+            "%s/mapping/get_snp_pileup/{tsample}_vs_{nsample}.tsv" % B_FOLDER
         conda:
             "../envs/main.yaml"
         input:

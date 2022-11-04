@@ -487,33 +487,37 @@ main <- function(args){
   # replace ** by ^
   df_rules$TCN <- gsub("\\*\\*", "\\^", df_rules$TCN)
 
-  for (i in 1:nrow(df_rules)){
-    rule <- df_rules[i,]
-    mask_rule <- df_cnv_tab$X_Male==rule$X_Male
-    for (cn in c("TCN", "LCN")){
-      if (rule[[cn]] != "NA" & !is.na(rule[[cn]])){
-        if (is.character(rule[[cn]]) & grepl(",", rule[[cn]])){
-          rule_cn_low <- unlist(strsplit(rule[[cn]], ","))[[1]]
-          rule_cn_high <- unlist(strsplit(rule[[cn]], ","))[[2]]
-          mask_rule <- mask_rule & eval(parse(text=paste0("df_cnv_tab[['", cn, "_Key']]", rule_cn_low)))
-          mask_rule <- mask_rule & eval(parse(text=paste0("df_cnv_tab[['", cn, "_Key']]", rule_cn_high)))
-        } else {
-          value_cn <- rule[[cn]]
-          mask_rule <- mask_rule & tryCatch({
-            eval(parse(text=paste0("df_cnv_tab[['", cn, "_Key']]", value_cn)))
-            }, error=function(cond) {
-            eval(parse(text=paste0("df_cnv_tab[['", cn, "_Key']]==", value_cn)))
-          })
+  if (nrow(df_cnv_tab) > 0) {
+    for (i in 1:nrow(df_rules)){
+      rule <- df_rules[i,]
+      mask_rule <- df_cnv_tab$X_Male==rule$X_Male
+      for (cn in c("TCN", "LCN")){
+        if (rule[[cn]] != "NA" & !is.na(rule[[cn]])){
+          if (is.character(rule[[cn]]) & grepl(",", rule[[cn]])){
+            rule_cn_low <- unlist(strsplit(rule[[cn]], ","))[[1]]
+            rule_cn_high <- unlist(strsplit(rule[[cn]], ","))[[2]]
+            mask_rule <- mask_rule & eval(parse(text=paste0("df_cnv_tab[['", cn, "_Key']]", rule_cn_low)))
+            mask_rule <- mask_rule & eval(parse(text=paste0("df_cnv_tab[['", cn, "_Key']]", rule_cn_high)))
+          } else {
+            value_cn <- rule[[cn]]
+            mask_rule <- mask_rule & tryCatch({
+              eval(parse(text=paste0("df_cnv_tab[['", cn, "_Key']]", value_cn)))
+              }, error=function(cond) {
+              eval(parse(text=paste0("df_cnv_tab[['", cn, "_Key']]==", value_cn)))
+            })
+          }
         }
       }
-    }
-    mask_rule[is.na(mask_rule)] <- FALSE
+      mask_rule[is.na(mask_rule)] <- FALSE
 
-    df_cnv_tab[mask_rule, "copy_number"] <- rule[["State"]]
-    df_cnv_tab[mask_rule, "copy_number_more"] <- rule[["State_More"]]
+      df_cnv_tab[mask_rule, "copy_number"] <- rule[["State"]]
+      df_cnv_tab[mask_rule, "copy_number_more"] <- rule[["State_More"]]
+    }
+  } else {
+    df_cnv_tab <- bind_cols(df_cnv_tab, data.frame(copy_number=numeric(0), copy_number_more=character(0)))
   }
 
-  # if 'chr' prefix was present, set it back
+    # if 'chr' prefix was present, set it back
   if (chr_prefix){
     df_cnv_tab$chrom <- paste0("chr", df_cnv_tab$chrom)
   }
@@ -582,30 +586,34 @@ main <- function(args){
   df_rules$TCN <- gsub("\\*\\*", "\\^", df_rules$TCN)
 
   # execute rules line by line
-  for (i in 1:nrow(df_rules)){
-    rule <- df_rules[i,]
-    mask_rule <- df_chr_arm$X_Male==rule$X_Male
-    for (cn in c("TCN", "LCN")){
-      if (rule[[cn]] != "NA" & !is.na(rule[[cn]])){
-        if (is.character(rule[[cn]]) & grepl(",", rule[[cn]])){
-          rule_cn_low <- unlist(strsplit(rule[[cn]], ","))[[1]]
-          rule_cn_high <- unlist(strsplit(rule[[cn]], ","))[[2]]
-          mask_rule <- mask_rule & eval(parse(text=paste0("df_chr_arm[['", cn, "_Key']]", rule_cn_low)))
-          mask_rule <- mask_rule & eval(parse(text=paste0("df_chr_arm[['", cn, "_Key']]", rule_cn_high)))
-        } else {
-          value_cn <- rule[[cn]]
-          mask_rule <- mask_rule & tryCatch({
-            eval(parse(text=paste0("df_chr_arm[['", cn, "_Key']]", value_cn)))
-            }, error=function(cond) {
-            eval(parse(text=paste0("df_chr_arm[['", cn, "_Key']]==", value_cn)))
-          })
+  if (nrow(df_chr_arm) > 0) {
+    for (i in 1:nrow(df_rules)){
+      rule <- df_rules[i,]
+      mask_rule <- df_chr_arm$X_Male==rule$X_Male
+      for (cn in c("TCN", "LCN")){
+        if (rule[[cn]] != "NA" & !is.na(rule[[cn]])){
+          if (is.character(rule[[cn]]) & grepl(",", rule[[cn]])){
+            rule_cn_low <- unlist(strsplit(rule[[cn]], ","))[[1]]
+            rule_cn_high <- unlist(strsplit(rule[[cn]], ","))[[2]]
+            mask_rule <- mask_rule & eval(parse(text=paste0("df_chr_arm[['", cn, "_Key']]", rule_cn_low)))
+            mask_rule <- mask_rule & eval(parse(text=paste0("df_chr_arm[['", cn, "_Key']]", rule_cn_high)))
+          } else {
+            value_cn <- rule[[cn]]
+            mask_rule <- mask_rule & tryCatch({
+              eval(parse(text=paste0("df_chr_arm[['", cn, "_Key']]", value_cn)))
+              }, error=function(cond) {
+              eval(parse(text=paste0("df_chr_arm[['", cn, "_Key']]==", value_cn)))
+            })
+          }
         }
       }
-    }
-    mask_rule[is.na(mask_rule)] <- FALSE
+      mask_rule[is.na(mask_rule)] <- FALSE
 
-    df_chr_arm[mask_rule, "copy_number"] <- rule[["State"]]
-    df_chr_arm[mask_rule, "copy_number_more"] <- rule[["State_More"]]
+      df_chr_arm[mask_rule, "copy_number"] <- rule[["State"]]
+      df_chr_arm[mask_rule, "copy_number_more"] <- rule[["State_More"]]
+    }
+  } else {
+    df_chr_arm <- bind_cols(df_chr_arm, data.frame(copy_number=numeric(0), copy_number_more=character(0)))
   }
 
   # select columns
@@ -627,10 +635,14 @@ main <- function(args){
 
 if (getOption('run.main', default=TRUE)) {
   parser <- ArgumentParser(description='Call chromosome arm copy-number changes.')
-  parser$add_argument("--input_vcf", type="character", help="Path to VCF from cnv_facets.")
-  parser$add_argument("--gender", type="character", help="'Gender of the sample. Either 'Male' or 'Female'.")
-  parser$add_argument("--rules_cat", type="character", help="Path to table of rules for calling SCNA categories.")
-  parser$add_argument("--rules_arm", type="character", help="Path to table of rules for calling chromosome arm events.")
+  parser$add_argument("--input_vcf", type="character", help="Path to VCF from cnv_facets.",
+        default="results/calling/somatic_cnv_facets/TCGA-13-0904-01A-02W-0420-08_vs_TCGA-13-0904-10A-01D-0399-01.vcf.gz")
+  parser$add_argument("--gender", type="character", help="'Gender of the sample. Either 'Male' or 'Female'.",
+                      default="Female")
+  parser$add_argument("--rules_cat", type="character", help="Path to table of rules for calling SCNA categories.",
+                      default="resources/facets_suite/facets_scna_categories_rules.xlsx")
+  parser$add_argument("--rules_arm", type="character", help="Path to table of rules for calling chromosome arm events.",
+                      default="resources/facets_suite/facets_suite_arm_level_rules.xlsx")
   parser$add_argument("--output_arm", type="character", help="Path to output table of chromosome arm SCNAs.")
   parser$add_argument("--output_sum", type="character", help="Path to output table of SCNA summary statistics.")
   parser$add_argument("--output_tab", type="character", help="Path to output table of categorized SCNAs.")

@@ -151,3 +151,24 @@ rule somatic_cnv_gene_calls:
             --threshold {params.threshold} \
             --output {output} &> {log}
         """
+
+
+# Convert table with cnv at segments to cnv at genes using bedtools
+rule somatic_cnv_gene_calls_filtered:
+    input:
+        "%s/calling/somatic_cnv_gene_calls/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER
+    output:
+        temp("%s/calling/somatic_cnv_gene_calls_filtered/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER)
+    benchmark:
+        "%s/calling/somatic_cnv_gene_calls_filtered/{tsample}_vs_{nsample}.tsv" % B_FOLDER
+    log:
+        "%s/calling/somatic_cnv_gene_calls_filtered/{tsample}_vs_{nsample}.log" % L_FOLDER
+    threads: 1
+    resources:
+        queue="shortq",
+        mem_mb=8000,
+        time_min=20
+    shell:
+        """
+        zcat {input} | grep "PASS\|Tumor_Sample_Barcode" | gzip > {output} 2> {log}
+        """

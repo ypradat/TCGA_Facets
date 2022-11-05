@@ -124,43 +124,16 @@ rule somatic_cnv_process_vcf:
 
 
 # Convert table with cnv at segments to cnv at genes using bedtools
-rule somatic_cnv_gene_calls_unfiltered:
+rule somatic_cnv_gene_calls:
     input:
         tab="%s/calling/somatic_cnv_table/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
         bed=config["params"]["cnv"]["bed"]
     output:
-        "%s/calling/somatic_cnv_gene_calls_unfiltered/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER
+        "%s/calling/somatic_cnv_gene_calls/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER
     benchmark:
-        "%s/calling/somatic_cnv_gene_calls_unfiltered/{tsample}_vs_{nsample}.tsv" % B_FOLDER
+        "%s/calling/somatic_cnv_gene_calls/{tsample}_vs_{nsample}.tsv" % B_FOLDER
     log:
-        "%s/calling/somatic_cnv_gene_calls_unfiltered/{tsample}_vs_{nsample}.log" % L_FOLDER
-    conda:
-        "../envs/python.yaml"
-    threads: 1
-    resources:
-        queue="shortq",
-        mem_mb=8000,
-        time_min=20
-    shell:
-        """
-        python -u workflow/scripts/02.2_cnv_gene_calls.py \
-            --input_tab {input.tab} \
-            --input_bed {input.bed} \
-            --output {output} &> {log}
-        """
-
-
-
-# Make a table of filter cnv calls per gene
-rule somatic_cnv_gene_calls_filtered:
-    input:
-        "%s/calling/somatic_cnv_gene_calls_unfiltered/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER
-    output:
-        "%s/calling/somatic_cnv_gene_calls_filtered/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER
-    benchmark:
-        "%s/calling/somatic_cnv_gene_calls_filtered/{tsample}_vs_{nsample}.tsv" % B_FOLDER
-    log:
-        "%s/calling/somatic_cnv_gene_calls_filtered/{tsample}_vs_{nsample}.log" % L_FOLDER
+        "%s/calling/somatic_cnv_gene_calls/{tsample}_vs_{nsample}.log" % L_FOLDER
     conda:
         "../envs/python.yaml"
     params:
@@ -172,8 +145,9 @@ rule somatic_cnv_gene_calls_filtered:
         time_min=20
     shell:
         """
-        python -u workflow/scripts/02.3_cnv_filter_calls.py \
-            --input_bed {input} \
+        python -u workflow/scripts/02.2_cnv_gene_calls.py \
+            --input_tab {input.tab} \
+            --input_bed {input.bed} \
             --threshold {params.threshold} \
             --output {output} &> {log}
         """

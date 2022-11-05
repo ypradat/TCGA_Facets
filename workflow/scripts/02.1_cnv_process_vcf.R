@@ -1,5 +1,5 @@
 # created: Oct 03 2022
-# modified: Nov 03 2022
+# modified: Nov 05 2022
 # author: Yoann Pradat
 # 
 #     CentraleSupelec
@@ -459,7 +459,7 @@ main <- function(args){
   #  - are on autosomes (1:22)
   out_hrdloh <- calculate_hrdloh(df_cnv_tab, ploidy, algorithm="em")
 
-  # compute WGD status and then classify SCNAs base on rules ===========================================================
+  # compute WGD status and then classify SCNAs using rules =============================================================
   genome <- extract_genome_sizes(vcf_header)
   out_wgd <- calculate_wgd(df_cnv_tab, genome)
 
@@ -517,11 +517,6 @@ main <- function(args){
     df_cnv_tab <- bind_cols(df_cnv_tab, data.frame(copy_number=numeric(0), copy_number_more=character(0)))
   }
 
-    # if 'chr' prefix was present, set it back
-  if (chr_prefix){
-    df_cnv_tab$chrom <- paste0("chr", df_cnv_tab$chrom)
-  }
-  
   # add columns ids and remove columsn added for calling
   df_cnv_tab <- bind_cols(data.frame(Tumor_Sample_Barcode=rep(tumor_sample, nrow(df_cnv_tab)),
                                      Matched_Norm_Sample_Barcode=rep(normal_sample, nrow(df_cnv_tab))),
@@ -532,7 +527,6 @@ main <- function(args){
 
   # compute in-house CNA scores ========================================================================================
   out_genome_fractions <- calculate_genome_fractions(df_cnv_tab, genome)
-  out_wgd <- calculate_wgd(df_cnv_tab, genome)
 
   # build table of summary statistics
   df_cna_sum <- data.frame(Tumor_Sample_Barcode=tumor_sample,
@@ -623,8 +617,17 @@ main <- function(args){
   # fill empty copy_number and copy_number_more
   mask_null <- is.na(df_chr_arm[["copy_number"]])
   df_chr_arm[mask_null, "copy_number"] <- 0
-  df_chr_arm[mask_null, "copy_number_more"] <- "NEUTR"
+  df_chr_arm[mask_null, "copy_number_more"] <- "NEUTR/OTHER"
 
+  # if 'chr' prefix was present, set it back
+  # redo renaming of chromosomes
+  df_cnv_tab[df_cnv_tab$chrom == 23, "chrom"] <- "X"
+  df_cnv_tab[df_cnv_tab$chrom == 24, "chrom"] <- "Y"
+
+  if (chr_prefix){
+    df_cnv_tab$chrom <- paste0("chr", df_cnv_tab$chrom)
+  }
+  
   # save results =======================================================================================================
   write.table(df_chr_arm, file=args$output_arm, row.names=F, sep="\t", quote=F)
   write.table(df_cna_sum, file=args$output_sum, row.names=F, sep="\t", quote=F)
@@ -636,16 +639,19 @@ main <- function(args){
 if (getOption('run.main', default=TRUE)) {
   parser <- ArgumentParser(description='Call chromosome arm copy-number changes.')
   parser$add_argument("--input_vcf", type="character", help="Path to VCF from cnv_facets.",
-        default="results/calling/somatic_cnv_facets/TCGA-13-0904-01A-02W-0420-08_vs_TCGA-13-0904-10A-01D-0399-01.vcf.gz")
+        default="results/calling/somatic_cnv_facets/TCGA-02-0003-01A-01D-1490-08_vs_TCGA-02-0003-10A-01D-1490-08.vcf.gz")
   parser$add_argument("--gender", type="character", help="'Gender of the sample. Either 'Male' or 'Female'.",
                       default="Female")
   parser$add_argument("--rules_cat", type="character", help="Path to table of rules for calling SCNA categories.",
                       default="resources/facets_suite/facets_scna_categories_rules.xlsx")
   parser$add_argument("--rules_arm", type="character", help="Path to table of rules for calling chromosome arm events.",
                       default="resources/facets_suite/facets_suite_arm_level_rules.xlsx")
-  parser$add_argument("--output_arm", type="character", help="Path to output table of chromosome arm SCNAs.")
-  parser$add_argument("--output_sum", type="character", help="Path to output table of SCNA summary statistics.")
-  parser$add_argument("--output_tab", type="character", help="Path to output table of categorized SCNAs.")
+  parser$add_argument("--output_arm", type="character", help="Path to output table of chromosome arm SCNAs.",
+        default="results/calling/somatic_cnv_chr_arm/TCGA-02-0003-01A-01D-1490-08_vs_TCGA-02-0003-10A-01D-1490-08.tsv")
+  parser$add_argument("--output_sum", type="character", help="Path to output table of SCNA summary statistics.",
+        default="results/calling/somatic_cnv_sum/TCGA-02-0003-01A-01D-1490-08_vs_TCGA-02-0003-10A-01D-1490-08.tsv")
+  parser$add_argument("--output_tab", type="character", help="Path to output table of categorized SCNAs.",
+        default="results/calling/somatic_cnv_table/TCGA-02-0003-01A-01D-1490-08_vs_TCGA-02-0003-10A-01D-1490-08.tsv")
   parser$add_argument('--log', type="character", help='Path to log file.')
   args <- parser$parse_args()
 

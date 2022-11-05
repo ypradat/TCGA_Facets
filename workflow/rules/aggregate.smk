@@ -28,7 +28,6 @@ rule somatic_ppy_aggregate:
         """
 
 
-
 ####
 #### Copy number variants ####
 ####
@@ -99,7 +98,7 @@ rule somatic_cna_table_aggregate:
 
 rule somatic_cna_filters_aggregate:
     input:
-        expand("%s/calling/somatic_cnv_gene_calls_unfiltered/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER,
+        expand("%s/calling/somatic_cnv_gene_calls/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER,
             get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
     output:
         "%s/aggregate/somatic_cna/somatic_calls_filters.tsv.gz" % R_FOLDER
@@ -107,8 +106,6 @@ rule somatic_cna_filters_aggregate:
         "%s/aggregate/somatic_cna/somatic_cna_filters_aggregate.tsv" % B_FOLDER
     log:
         "%s/aggregate/somatic_cna/somatic_cna_filters_aggregate.log" % L_FOLDER
-    conda:
-        "../envs/python.yaml"
     params:
         threshold=config["params"]["cnv"]["calls_threshold"]
     threads: 1
@@ -118,16 +115,18 @@ rule somatic_cna_filters_aggregate:
         time_min=60
     shell:
         """
-        python -u workflow/scripts/04.4_concatenate_somatic_cna_calls.py \
-            --cnv {input} \
-            --threshold {params.threshold} \
-            --output {output} &> {log}
+        files=( {input} )
+        if [[ ${{#files[@]}} == 1 ]]; then
+            zcat ${{files[0]}} | gzip > {output} 2> {log}
+        else
+            {{ zcat ${{files[@]:0:1}}; zgrep --no-filename -v "^##\|Tumor_Sample_Barcode" ${{files[@]:1}}; }} | gzip > {output} 2> {log}
+        fi
         """
 
 
 rule somatic_cna_calls_aggregate:
     input:
-        expand("%s/calling/somatic_cnv_gene_calls_filtered/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER,
+        expand("%s/calling/somatic_cnv_gene_calls/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER,
             get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
     output:
         "%s/aggregate/somatic_cna/somatic_calls.tsv.gz" % R_FOLDER
@@ -135,8 +134,6 @@ rule somatic_cna_calls_aggregate:
         "%s/aggregate/somatic_cna/somatic_cna_calls_aggregate.tsv" % B_FOLDER
     log:
         "%s/aggregate/somatic_cna/somatic_cna_calls_aggregate.log" % L_FOLDER
-    conda:
-        "../envs/python.yaml"
     params:
         threshold=config["params"]["cnv"]["calls_threshold"]
     threads: 1
@@ -146,9 +143,37 @@ rule somatic_cna_calls_aggregate:
         time_min=60
     shell:
         """
-        python -u workflow/scripts/04.4_concatenate_somatic_cna_calls.py \
-            --cnv {input} \
-            --threshold {params.threshold} \
+        files=( {input} )
+        if [[ ${{#files[@]}} == 1 ]]; then
+            zcat ${{files[0]}} | grep "PASS\|Tumor_Sample_Barcode" | gzip > {output} 2> {log}
+        else
+            {{ zcat ${{files[@]:0:1}}; zgrep --no-filename -v "^##\|Tumor_Sample_Barcode" ${{files[@]:1}}; }} | \
+                grep "PASS\|Tumor_Sample_Barcode" | gzip > {output} 2> {log}
+        fi
+        """
+
+
+# Aggregate all somatic civic-annotated MAF tables.
+rule somatic_cna_civic_aggregate:
+    input:
+        lambda w: get_input_concatenate(w, typ="cna", db="civic")
+    output:
+        "%s/aggregate/somatic_cna/somatic_calls_civic.tsv.gz" % R_FOLDER
+    benchmark:
+        "%s/aggregate/somatic_cna/somatic_cna_civic_aggregate.tsv" % B_FOLDER
+    log:
+        "%s/aggregate/somatic_cna/somatic_cna_civic_aggregate.log" % L_FOLDER
+    conda:
+        "../envs/python.yaml"
+    threads: 1
+    resources:
+        queue="shortq",
+        mem_mb=16000,
+        time_min=60
+    shell:
+        """
+        python -u workflow/scripts/04.1_concatenate_tables.py \
+            --files {input} \
             --output {output} &> {log}
         """
 
@@ -172,33 +197,7 @@ rule somatic_cna_oncokb_aggregate:
     shell:
         """
         python -u workflow/scripts/04.1_concatenate_tables.py \
-            --input {input} \
-            --output {output} &> {log}
-        """
-
-
-
-# Aggregate all somatic civic-annotated MAF tables.
-rule somatic_cna_civic_aggregate:
-    input:
-        lambda w: get_input_concatenate(w, typ="cna", db="civic")
-    output:
-        "%s/aggregate/somatic_cna/somatic_calls_civic.tsv.gz" % R_FOLDER
-    benchmark:
-        "%s/aggregate/somatic_cna/somatic_cna_civic_aggregate.tsv" % B_FOLDER
-    log:
-        "%s/aggregate/somatic_cna/somatic_cna_civic_aggregate.log" % L_FOLDER
-    conda:
-        "../envs/python.yaml"
-    threads: 1
-    resources:
-        queue="shortq",
-        mem_mb=16000,
-        time_min=60
-    shell:
-        """
-        python -u workflow/scripts/04.1_concatenate_tables.py \
-            --input {input} \
+            --files {input} \
             --output {output} &> {log}
         """
 

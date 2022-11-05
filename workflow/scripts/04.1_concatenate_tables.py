@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @created: Jan 05 2022
-@modified: Jan 05 2022
+@modified: Nov 05 2022
 @author: Yoann Pradat
 
     CentraleSupelec
@@ -69,44 +69,45 @@ def save_table_with_header(df, header, output):
 
 
 def main(args):
-    # load one header
-    header = read_header(args.input[0])
+    if args.files is not None:
+        files = args.files
+    elif args.folder is not None:
+        files = [os.path.join(args.folder, x) for x in os.listdir(args.folder)]
+    else:
+        raise ValueError("One of --files or --folder must be specified.")
 
-    # load tables
-    # files = args.input
-    folder = args.input
-    files = os.listdir(folder)
+    # load all tables 
     dfs = []
     for i, file in enumerate(files):
-        filepath = os.path.join(folder, file)
-        if os.stat(filepath).st_size==0:
-            print("-file %s has size 0B" % filepath)
-        else:
-            df = read_table(filepath)
-            dfs.append(df)
-            if (i+1)%(len(files)//100)==0:
-                print("-processed %d/%d files" % (i+1, len(files)), flush=True)
+        df = read_table(file)
+        dfs.append(df)
+        if (i+1)%(len(files)//100)==0:
+            print("-processed %d/%d files" % (i+1, len(files)), flush=True)
 
     # concatenate
+    print("-concatenating %d tables..." % len(dfs), flush=True, end="")
     df = pd.concat(dfs, axis=0)
-    df = df.loc[:, df.isnull().mean(axis=0)<1]
+    print("done!", flush=True)
 
     # save
+    print("-saving concatenated table at %s..." % args.output, flush=True, end="")
     if not args.keep_header:
         df.to_csv(args.output, index=False, sep="\t")
     else:
+        header = read_header(files[0])
         save_table_with_header(df, header, args.output)
+    print("done!", flush=True)
 
 
 # run ==================================================================================================================
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Concatenate multiple MAF tables.")
-    parser.add_argument('--input', nargs="+", type=str, help='Paths to maf tables.')
+    parser = argparse.ArgumentParser(description="Concatenate multiple tables.")
+    parser.add_argument('--files', nargs="*", type=str, help='Paths to tables.', default=None)
+    parser.add_argument('--folder', type=str, help='Path to folder with tables.', default=None)
     parser.add_argument("--keep_header", action="store_true", default=False,
                         help="If used, the header of the maf tables is preserved.")
-    parser.add_argument('--output', type=str, help='Path to output table.',
-                        default="results/aggregate/somatic_cna/somatic_calls_oncokb.tsv.gz")
+    parser.add_argument('--output', type=str, help='Path to output table.')
     args = parser.parse_args()
 
     for arg in vars(args):

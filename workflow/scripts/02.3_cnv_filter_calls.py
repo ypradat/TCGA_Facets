@@ -23,19 +23,6 @@ import pandas as pd
 
 # functions ============================================================================================================
 
-def convert_num_to_str(x):
-    try:
-        y = "%d" % int(x)
-    except:
-        try:
-            y = "%f" % float(x)
-            if y=="nan":
-                y = x
-        except:
-            y = x
-
-    return y
-
 
 def main(args):
     # load data

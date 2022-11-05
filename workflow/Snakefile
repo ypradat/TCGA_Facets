@@ -31,7 +31,7 @@ def get_input_rule_all(w):
         get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
     inputs += expand("%s/calling/somatic_cnv_table/{tsample}_vs_{nsample}.tsv" % R_FOLDER, \
         get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
-    inputs += expand("%s/calling/somatic_cnv_gene_calls_filtered/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER, \
+    inputs += expand("%s/calling/somatic_cnv_gene_calls/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER, \
         get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
     inputs += expand("%s/annotation/somatic_cna_oncokb/{tsample}_vs_{nsample}.tsv" % R_FOLDER, \
         get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)

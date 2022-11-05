@@ -126,7 +126,7 @@ rule somatic_cna_filters_aggregate:
 
 rule somatic_cna_calls_aggregate:
     input:
-        expand("%s/calling/somatic_cnv_gene_calls/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER,
+        expand("%s/calling/somatic_cnv_gene_calls_filtered/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER,
             get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
     output:
         "%s/aggregate/somatic_cna/somatic_calls.tsv.gz" % R_FOLDER
@@ -145,10 +145,9 @@ rule somatic_cna_calls_aggregate:
         """
         files=( {input} )
         if [[ ${{#files[@]}} == 1 ]]; then
-            zcat ${{files[0]}} | grep "PASS\|Tumor_Sample_Barcode" | gzip > {output} 2> {log}
+            zcat ${{files[0]}} | gzip > {output} 2> {log}
         else
-            {{ zcat ${{files[@]:0:1}}; zgrep --no-filename -v "^##\|Tumor_Sample_Barcode" ${{files[@]:1}}; }} | \
-                grep "PASS\|Tumor_Sample_Barcode" | gzip > {output} 2> {log}
+            {{ zcat ${{files[@]:0:1}}; zgrep --no-filename -v "^##\|Tumor_Sample_Barcode" ${{files[@]:1}}; }} | gzip > {output} 2> {log}
         fi
         """
 

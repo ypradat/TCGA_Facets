@@ -29,8 +29,7 @@ def main(args):
     midfolders = ["mapping", "calling", "annotation"]
 
     subfolders = ["somatic_cnv_process_vcf", "somatic_cnv_chr_arm", "somatic_cnv_sum", "somatic_cnv_table",
-                  "somatic_cnv_gene_calls_unfiltered", "somatic_cnv_gene_calls_filtered",
-                  "somatic_cna_civic", "somatic_cna_oncokb"]
+                  "somatic_cnv_gene_calls", "somatic_cna_civic", "somatic_cna_oncokb"]
 
     if args.start_from in ["download_bam"]:
         subfolders = ["download_bam"] + subfolders

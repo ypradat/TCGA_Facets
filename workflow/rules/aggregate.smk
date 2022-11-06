@@ -35,8 +35,7 @@ rule somatic_ppy_aggregate:
 rule somatic_cna_chr_arm_aggregate:
     input:
         expand("%s/calling/somatic_cnv_chr_arm/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
-            get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na),
-        rules=config["params"]["cnv"]["chr_arm_rules"]
+            get_allowed_pairs_tumor_normal(), tsample=tsamples, nsample=nsamples_na)
     output:
         "%s/aggregate/somatic_cna/somatic_calls_per_chr_arm.tsv.gz" % R_FOLDER
     benchmark:

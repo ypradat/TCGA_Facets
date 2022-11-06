@@ -153,7 +153,7 @@ rule somatic_cnv_gene_calls:
         """
 
 
-# Convert table with cnv at segments to cnv at genes using bedtools
+# Make a table of filter cnv calls per gene
 rule somatic_cnv_gene_calls_filtered:
     input:
         "%s/calling/somatic_cnv_gene_calls/{tsample}_vs_{nsample}.tsv.gz" % R_FOLDER

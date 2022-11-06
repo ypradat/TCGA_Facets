@@ -21,6 +21,7 @@ import numpy as np
 import os
 import pandas as pd
 import subprocess
+import re
 
 # functions ============================================================================================================
 
@@ -119,6 +120,7 @@ def main(args):
     df_cnv["TCN_EM:LCN_EM"] = df_cnv[["tcn.em", "lcn.em"]].astype(str).apply(":".join, axis=1)
 
     # add filter for events covering more than X Mb
+    df_cnv["svlen"] = df_cnv["svlen"].apply(lambda x: re.sub(r".0+$", "", x))
     df_cnv["svlen"] = df_cnv["svlen"].astype(int)
     mask = df_cnv["svlen"] < args.threshold*1e6
     print("-INFO: flagged %d/%d lines (~ genes) from SV longer than %s Mb" % (sum(~mask), len(mask), args.threshold))

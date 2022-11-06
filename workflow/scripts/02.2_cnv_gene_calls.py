@@ -120,12 +120,15 @@ def main(args):
     df_cnv["TCN_EM:LCN_EM"] = df_cnv[["tcn.em", "lcn.em"]].astype(str).apply(":".join, axis=1)
 
     # add filter for events covering more than X Mb
-    df_cnv["svlen"] = df_cnv["svlen"].apply(lambda x: re.sub(r".0+$", "", x))
+    df_cnv[["svstart", "svend", "svlen"]]
+
+    df_cnv["svlen"] = df_cnv["svlen"].apply(lambda x: re.sub(r"\.0+$", "", x))
     df_cnv["svlen"] = df_cnv["svlen"].astype(int)
     mask = df_cnv["svlen"] < args.threshold*1e6
     print("-INFO: flagged %d/%d lines (~ genes) from SV longer than %s Mb" % (sum(~mask), len(mask), args.threshold))
-    df_cnv.loc[~mask, "FILTER"] = "SV > %d Mb" % args.threshold
-    df_cnv["FILTER"] = df_cnv["FILTER"].fillna("PASS")
+    df_cnv["FILTER"] = "PASS"
+    if sum(~mask)>0:
+        df_cnv.loc[~mask, "FILTER"] = "SV > %d Mb" % args.threshold
 
     # format numeric values
     cols_num = ["start", "end", "tcn.em", "lcn.em", "overlap", "svstart", "svend", "svlen", "Copy_Number"]

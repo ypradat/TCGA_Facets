@@ -1,5 +1,5 @@
 # created: Oct 03 2022
-# modified: Nov 05 2022
+# modified: Nov 06 2022
 # author: Yoann Pradat
 # 
 #     CentraleSupelec
@@ -637,21 +637,14 @@ main <- function(args){
 # run ==================================================================================================================
 
 if (getOption('run.main', default=TRUE)) {
-  parser <- ArgumentParser(description='Call chromosome arm copy-number changes.')
-  parser$add_argument("--input_vcf", type="character", help="Path to VCF from cnv_facets.",
-        default="results/calling/somatic_cnv_facets/TCGA-02-0003-01A-01D-1490-08_vs_TCGA-02-0003-10A-01D-1490-08.vcf.gz")
-  parser$add_argument("--gender", type="character", help="'Gender of the sample. Either 'Male' or 'Female'.",
-                      default="Female")
-  parser$add_argument("--rules_cat", type="character", help="Path to table of rules for calling SCNA categories.",
-                      default="resources/facets_suite/facets_scna_categories_rules.xlsx")
-  parser$add_argument("--rules_arm", type="character", help="Path to table of rules for calling chromosome arm events.",
-                      default="resources/facets_suite/facets_suite_arm_level_rules.xlsx")
-  parser$add_argument("--output_arm", type="character", help="Path to output table of chromosome arm SCNAs.",
-        default="results/calling/somatic_cnv_chr_arm/TCGA-02-0003-01A-01D-1490-08_vs_TCGA-02-0003-10A-01D-1490-08.tsv")
-  parser$add_argument("--output_sum", type="character", help="Path to output table of SCNA summary statistics.",
-        default="results/calling/somatic_cnv_sum/TCGA-02-0003-01A-01D-1490-08_vs_TCGA-02-0003-10A-01D-1490-08.tsv")
-  parser$add_argument("--output_tab", type="character", help="Path to output table of categorized SCNAs.",
-        default="results/calling/somatic_cnv_table/TCGA-02-0003-01A-01D-1490-08_vs_TCGA-02-0003-10A-01D-1490-08.tsv")
+  parser <- ArgumentParser(description='Call chromosome arm copy-number changes and categorize SCNAs.')
+  parser$add_argument("--input_vcf", type="character", help="Path to VCF from cnv_facets.")
+  parser$add_argument("--gender", type="character", help="'Gender of the sample. Either 'Male' or 'Female'.")
+  parser$add_argument("--rules_cat", type="character", help="Path to table of rules for calling SCNA categories.")
+  parser$add_argument("--rules_arm", type="character", help="Path to table of rules for calling chromosome arm events.")
+  parser$add_argument("--output_arm", type="character", help="Path to output table of chromosome arm SCNAs.")
+  parser$add_argument("--output_sum", type="character", help="Path to output table of SCNA summary statistics.")
+  parser$add_argument("--output_tab", type="character", help="Path to output table of categorized SCNAs.")
   parser$add_argument('--log', type="character", help='Path to log file.')
   args <- parser$parse_args()
 

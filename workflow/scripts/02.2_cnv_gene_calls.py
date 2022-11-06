@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @created: Feb 01 2022
-@modified: Nov 05 2022
+@modified: Nov 06 2022
 @author: Yoann Pradat
 
     CentraleSupelec
@@ -152,14 +152,10 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Used a bed file of genes to infer gene-level CNAs.")
-    parser.add_argument('--input_tab', type=str, help='Path to tsv file.',
-        default="results/calling/somatic_cnv_table/TCGA-02-0003-01A-01D-1490-08_vs_TCGA-02-0003-10A-01D-1490-08.tsv")
-    parser.add_argument('--input_bed', type=str, help='Path to bed file.',
-        default="resources/gene_set/Homo_sapiens.GRCh38.104.gff3.gene.bed")
-    parser.add_argument('--threshold', type=int, help='CNV events from segments larger than x Mb are flagged.',
-                        default=10)
-    parser.add_argument('--output', type=str, help='Path to output table.',
-        default="results/calling/somatic_cnv_gene_calls/TCGA-02-0003-01A-01D-1490-08_vs_TCGA-02-0003-10A-01D-1490-08.tsv.gz")
+    parser.add_argument('--input_tab', type=str, help='Path to tsv file.')
+    parser.add_argument('--input_bed', type=str, help='Path to bed file.')
+    parser.add_argument('--threshold', type=int, help='CNV events from segments larger than x Mb are flagged.')
+    parser.add_argument('--output', type=str, help='Path to output table.')
     args = parser.parse_args()
 
     for arg in vars(args):

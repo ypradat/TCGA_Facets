@@ -6,4 +6,5 @@ channels:
 dependencies:
   - snakemake
   - pandas
+  - python=3.8
   - mamba

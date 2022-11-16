@@ -21,6 +21,7 @@ params:
             cvals:
                 pre: 25
                 pro: 500
+                purity: 1000
             gbuild: hg38
         chr_arm_rules: resources/facets_suite/facets_suite_arm_level_rules.xlsx
         cna_cat_rules: resources/facets_suite/facets_scna_categories_rules.xlsx

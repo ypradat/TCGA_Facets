@@ -30,4 +30,5 @@ rule setup_main:
         """
         Rscript -e 'devtools::install_github("https://github.com/veseshan/pctGCdata")' &> {log}
         Rscript -e 'devtools::install_github("https://github.com/ypradat/facets")' &>> {log}
+        Rscript -e 'devtools::install_github("mskcc/facets-suite")' &>> {log}
         """

@@ -70,6 +70,9 @@ def main(args):
     df_sam["File_Size"] = df_sam["File_Size"].astype(int)
     df_sam["Index_File_Size"] = df_sam["Index_File_Size"].astype(int)
 
+    df_sam_cur = pd.read_table("config/samples.all.tsv")
+    df_sam = df_sam.loc[df_sam["Sample_Id"].isin(df_sam_cur["Sample_Id"])]
+
     # prepare table of tumor/normal pairs
     cols_attributes = [x for x in cols if x not in cols_ids + ["Sample_Type", "Biopsy_Type"]]
     df_sam_dna_n = df_sam.loc[df_sam["Sample_Type"]=="DNA_N"][cols_attributes + ["Sample_Id", "File_Size"]]
@@ -154,7 +157,7 @@ if __name__ == "__main__":
     parser.add_argument("--out_tnp", type=str, help="Path to table of tumor/normal pairs.",
                         default="config/tumor_normal_pairs.all.tsv")
     parser.add_argument("--max_batch_size", type=int, help="Max number of tumor/normal pairs for one batch.",
-                        default=50)
+                        default=8)
     args = parser.parse_args()
 
     main(args)

@@ -62,6 +62,14 @@ def get_column_table_sample(wildcards, col):
                     value = table.loc[tsample, col]
     return value
 
+def get_input_snp_pileup(w):
+    inputs = []
+    inputs.append(config["samples"])
+    inputs.append(config["params"]["gatk"]["known_sites"])
+    if config["start_from"] in ["download_bam", "get_snp_pileup"]:
+        inputs.append("%s/mapping/download_bam_{tsample}.done" % L_FOLDER)
+        inputs.append(download_nbam="%s/mapping/download_bam_{nsample}.done" % L_FOLDER)
+    return inputs
 
 def get_input_concatenate(w, typ, db):
     input_folder = "%s/annotation/somatic_%s_%s_filter" % (R_FOLDER, typ, db)

@@ -54,7 +54,7 @@ if config["start_from"]=="download_bam":
                --bucket_gs_uri {params.gs_bucket} &> {log}
             """
 
-if config["start_from"] in ["download_bam", "get_snp_pileup"]:
+if config["start_from"] in ["download_bam", "get_snp_pileup", "somatic_cnv_facets"]:
     # Get snp pileup table
     rule get_snp_pileup:
         log:
@@ -64,10 +64,7 @@ if config["start_from"] in ["download_bam", "get_snp_pileup"]:
         conda:
             "../envs/main.yaml"
         input:
-            table=config["samples"],
-            snp_vcf=config["params"]["gatk"]["known_sites"],
-            download_tbam="%s/mapping/download_bam_{tsample}.done" % L_FOLDER,
-            download_nbam="%s/mapping/download_bam_{nsample}.done" % L_FOLDER,
+            get_snp_pileup_input()
         output:
             snp_pileup="%s/calling/somatic_snp_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER,
             nbhd_snp="%s/calling/somatic_nbhd_snp/{tsample}_vs_{nsample}.tsv" % R_FOLDER
@@ -90,43 +87,6 @@ if config["start_from"] in ["download_bam", "get_snp_pileup"]:
                 -r {params.vm_res_folder} \
                 -t {wildcards.tsample} \
                 -n {wildcards.nsample} \
-                -v {input.snp_vcf} \
-                -p {threads} &> {log}
-            """
-
-if config["start_from"] in ["somatic_cnv_facets"]:
-    # Get snp pileup table
-    rule get_snp_pileup:
-        log:
-            "%s/mapping/get_snp_pileup/{tsample}_vs_{nsample}.log" % L_FOLDER
-        benchmark:
-            "%s/mapping/get_snp_pileup/{tsample}_vs_{nsample}.tsv" % B_FOLDER
-        conda:
-            "../envs/main.yaml"
-        input:
-            table=config["samples"],
-        output:
-            snp_pileup="%s/calling/somatic_snp_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER,
-            nbhd_snp="%s/calling/somatic_nbhd_snp/{tsample}_vs_{nsample}.tsv" % R_FOLDER
-        params:
-            gs_bam_bucket=config["gcloud"]["gs_bam_bucket"],
-            gs_snp_bucket=config["gcloud"]["gs_res_bucket"],
-            vm_res_folder=R_FOLDER
-        threads:
-            get_threads_snp_pileup
-        resources:
-            queue="shortq",
-            mem_mb=28000,
-            time_min=60,
-            load=get_load_snp_pileup
-        shell:
-            """
-            bash workflow/scripts/01.2_get_snp_pileup.sh \
-                -a {params.gs_bam_bucket} \
-                -b {params.gs_snp_bucket} \
-                -r {params.vm_res_folder} \
-                -t {wildcards.tsample} \
-                -n {wildcards.nsample} \
-                -v {input.snp_vcf} \
+                -v {inputs[1]} \
                 -p {threads} &> {log}
             """

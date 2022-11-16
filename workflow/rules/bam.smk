@@ -87,6 +87,6 @@ if config["start_from"] in ["download_bam", "get_snp_pileup", "somatic_cnv_facet
                 -r {params.vm_res_folder} \
                 -t {wildcards.tsample} \
                 -n {wildcards.nsample} \
-                -v {inputs[1]} \
+                -v {input[1]} \
                 -p {threads} &> {log}
             """

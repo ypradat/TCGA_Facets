@@ -5,7 +5,7 @@ usage() { echo "$0 Usage:" && grep " .)\ #" $0; exit 0; }
 dry_run="no"
 skip_bam_copy="no"
 
-while getopts ":a:b:i:f::ns h" opt; do
+while getopts ":a:b:i:f:t::ns h" opt; do
   case $opt in
     a) # Minimum batch index to be run. Ignored if -i is used.
       batch_min="$OPTARG"
@@ -19,6 +19,9 @@ while getopts ":a:b:i:f::ns h" opt; do
     f) # <download_bam|get_snp_pileup|somatic_cnv_facets|somatic_cnv_process_vcf> Rule name from which the pipeline is started. 
       start_from="$OPTARG"
       [[ $start_from =~ ^(download_bam|get_snp_pileup|somatic_cnv_facets|somatic_cnv_process_vcf)$ ]] || usage
+      ;;
+    t) # Github token for downloading the pipeline code.
+      github_token="$OPTARG"
       ;;
     n) # If -n option is used, only print messages will be displayed and no instance will be started (dry run).
       dry_run="yes"
@@ -144,7 +147,7 @@ EOF
 --provisioning-model=spot \
 --preemptible \
 --metadata-from-file=startup-script=./gcloud/instances/startup_instance.sh,shutdown-script=./gcloud/instances/shutdown_instance.sh \
---metadata=batch_index=${batch_index},start_from=${start_from}
+--metadata=batch_index=${batch_index},start_from=${start_from},github_token=${github_token}
 EOF
   else
     # Create the instance and run the pipeline via the startup script
@@ -168,6 +171,6 @@ EOF
       --provisioning-model=spot \
       --preemptible \
       --metadata-from-file=startup-script=./gcloud/instances/startup_instance.sh,shutdown-script=./gcloud/instances/shutdown_instance.sh \
-      --metadata=batch_index=${batch_index},start_from=${start_from}
+      --metadata=batch_index=${batch_index},start_from=${start_from},github_token=${github_token}
   fi
 done

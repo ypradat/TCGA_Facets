@@ -3,6 +3,7 @@
 user=ypradat
 batch_index=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/batch_index -H "Metadata-Flavor: Google")
 start_from=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/start_from -H "Metadata-Flavor: Google")
+github_token=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/github_token -H "Metadata-Flavor: Google")
 zone=$(curl -H Metadata-Flavor:Google http://metadata.google.internal/computeMetadata/v1/instance/zone -s | cut -d/ -f4)
 instance_id=$(gcloud compute instances describe $(hostname) --zone=${zone} --format="get(id)")
 gcloud_log_name=startup-gcloud-vm-${batch_index}
@@ -103,7 +104,7 @@ fi
 if [[ ! -d "/home/${user}/TCGA_Facets" ]]
 then
   # get the code
-  git clone https://ypradat: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@github.com/ypradat/TCGA_Facets.git /home/${user}/TCGA_Facets
+  git clone https://ypradat:${github_token}@github.com/ypradat/TCGA_Facets.git /home/${user}/TCGA_Facets
 
   # log message
   gcloud logging write ${gcloud_log_name} \

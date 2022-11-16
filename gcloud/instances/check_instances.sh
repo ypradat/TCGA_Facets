@@ -2,14 +2,17 @@
 
 usage() { echo "$0 Usage:" && grep " .)\ #" $0; exit 0; }
 
-while getopts ":t:f: h" opt; do
+while getopts ":m:f:t: h" opt; do
   case $opt in
-    t) # time in seconds separating two consecutive checks.
+    m) # time in seconds separating two consecutive checks.
       time="$OPTARG"
       ;;
     f) # <download_bam|get_snp_pileup|somatic_cnv_facets|somatic_cnv_process_vcf> Rule name from which the pipeline is started. 
       start_from="$OPTARG"
       [[ $start_from =~ ^(download_bam|get_snp_pileup|somatic_cnv_facets|somatic_cnv_process_vcf)$ ]] || usage
+      ;;
+    t) # Github token for downloading the pipeline code.
+      github_token="$OPTARG"
       ;;
     h) # Display help.
       usage
@@ -87,7 +90,7 @@ do
       "${#indices_deleted_first[@]}"
     for index_deleted_first in "${indices_deleted_first[@]}"
     do
-      bash gcloud/instances/run_instances.sh -i ${index_deleted_first} -s -f ${start_from}
+      bash gcloud/instances/run_instances.sh -i ${index_deleted_first} -s -f ${start_from} -t ${github_token}
     done
   fi
 
@@ -97,7 +100,7 @@ do
       "${#indices_deleted_second[@]}"
     for index_deleted_second in "${indices_deleted_second[@]}"
     do
-      bash gcloud/instances/run_instances.sh -i ${index_deleted_second} -s -f ${start_from}
+      bash gcloud/instances/run_instances.sh -i ${index_deleted_second} -s -f ${start_from} -t ${github_token}
     done
   fi
 

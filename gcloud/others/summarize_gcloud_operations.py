@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @created: Oct 15 2022
-@modified: Oct 22 2022
+@modified: Nov 16 2022
 @author: Yoann Pradat
 
     CentraleSupelec
@@ -19,6 +19,7 @@ import argparse
 import os
 import pandas as pd
 import subprocess
+import pytz
 from functools import reduce
 
 # functions ============================================================================================================
@@ -32,12 +33,13 @@ def get_operations_table(operation_type, target_link="instances/facets-tcga-[\d]
     lines = [x.split() for x in cmd_stdout.split("\n") if x!=""]
     if len(lines)==1:
         return pd.DataFrame(columns=lines[0])
-    elif len(lines)==1:
+    elif len(lines)==0:
         return pd.DataFrame()
     else:
         df = pd.DataFrame(lines[1:], columns=lines[0])
+        tz = pytz.timezone("Europe/Paris")
         df["TARGET_NAME"] = df["TARGET"].apply(lambda x: os.path.basename(x))
-        df["TIMESTAMP_DT"] = pd.to_datetime(df["TIMESTAMP"]).apply(lambda x: x.tz_convert("Europe/Paris"))
+        df["TIMESTAMP_DT"] = pd.to_datetime(df["TIMESTAMP"]).apply(lambda x: x.astimezone(tz))
         return df
 
 
@@ -104,7 +106,7 @@ def main(args):
 
     # select only instances created after 2022-10-18 06:00:00 (Europe/Paris)
     df_insert = df_insert.sort_values(by=["TARGET_NAME", "TIMESTAMP_DT"], ascending=True)
-    start_timestamp = pd.to_datetime("2022-10-18T06:00:00+02:00")
+    start_timestamp = pd.to_datetime("2022-11-06T18:00:00+02:00")
     df_insert = df_insert.loc[df_insert["TIMESTAMP_DT"] >= start_timestamp]
 
     # rename columns and merge iteratively
@@ -158,6 +160,7 @@ def main(args):
     df_table = df_table.merge(df_disk_size, how="left", on="TARGET_NAME")
 
     # estimate cost
+    # base_hourly_cost = 48.92/(24*30.5)
     base_hourly_cost = 391.35/(24*30.5)
     disk_hourly_cost_per_gb = 0.1/(24*30.5)
     df_table["COST_STANDARD"] = df_table["RUNTIME_HOUR"] * (base_hourly_cost + disk_hourly_cost_per_gb

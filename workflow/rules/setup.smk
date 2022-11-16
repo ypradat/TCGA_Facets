@@ -11,7 +11,8 @@ rule setup_r:
         time_min=60
     shell:
         """
-        Rscript -e 'devtools::install_github("https://github.com/ypradat/facets")' &> {log}
+        Rscript -e 'devtools::install_github("https://github.com/veseshan/pctGCdata")' &> {log}
+        Rscript -e 'devtools::install_github("https://github.com/ypradat/facets")' &>> {log}
         Rscript -e 'devtools::install_github("mskcc/facets-suite")' &>> {log}
         """
 

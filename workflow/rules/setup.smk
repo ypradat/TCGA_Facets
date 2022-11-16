@@ -1,6 +1,6 @@
 rule setup_r:
     log:
-        "%s/setup.log" % L_FOLDER
+        "%s/setup_r.log" % L_FOLDER
     conda:
         "../envs/r.yaml"
     output:
@@ -18,7 +18,7 @@ rule setup_r:
 
 rule setup_main:
     log:
-        "%s/setup.log" % L_FOLDER
+        "%s/setup_main.log" % L_FOLDER
     conda:
         "../envs/main.yaml"
     output:

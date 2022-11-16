@@ -74,7 +74,7 @@ if config["start_from"] in ["download_bam", "get_snp_pileup", "somatic_cnv_facet
         log:
             "%s/calling/somatic_cnv_facets_suite/{tsample}_vs_{nsample}.log" % L_FOLDER
         conda:
-            "../envs/main.yaml"
+            "../envs/r.yaml"
         params:
             prefix="{tsample}_vs_{nsample}",
             nbhd_snp=lambda wildcards, input: pd.read_table(input.nbhd_snp)["nbhd_snp"].get(0),

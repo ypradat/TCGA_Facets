@@ -54,7 +54,7 @@ if config["start_from"]=="download_bam":
                --bucket_gs_uri {params.gs_bucket} &> {log}
             """
 
-if config["start_from"] in ["download_bam", "get_snp_pileup"]:
+if config["start_from"] in ["download_bam", "get_snp_pileup", "somatic_cnv_facets"]:
     # Get snp pileup table
     rule get_snp_pileup:
         log:

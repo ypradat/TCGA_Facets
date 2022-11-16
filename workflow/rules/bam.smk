@@ -70,7 +70,7 @@ if config["start_from"] in ["download_bam", "get_snp_pileup", "somatic_cnv_facet
             nbhd_snp="%s/calling/somatic_nbhd_snp/{tsample}_vs_{nsample}.tsv" % R_FOLDER
         params:
             gs_bam_bucket=config["gcloud"]["gs_bam_bucket"],
-            gs_snp_bucket=config["gcloud"]["gs_res_bucket"],
+            gs_snp_bucket="%s/results" % config["gcloud"]["gs_res_bucket"],
             vm_res_folder=R_FOLDER
         threads:
             get_threads_snp_pileup

@@ -95,7 +95,7 @@ if config["start_from"] in ["download_bam", "get_snp_pileup", "somatic_cnv_facet
                 --directory {output} \
                 --purity-cval {params.cval_purity} \
                 --cval {params.cval_pro} \
-                --gbuild {params.gbuild} \
+                --genome {params.gbuild} \
                 --snp-window-size {params.nbhd_snp} \
                 --facets-lib-path '' \
                 --everything &> {log}

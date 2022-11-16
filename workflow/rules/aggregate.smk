@@ -154,7 +154,7 @@ rule somatic_cna_calls_aggregate:
 # Aggregate all somatic civic-annotated MAF tables.
 rule somatic_cna_civic_aggregate:
     input:
-        lambda w: get_input_concatenate(w, typ="cna", db="civic")
+        lambda w: get_input_aggregate(w, typ="cna", db="civic")
     output:
         "%s/aggregate/somatic_cna/somatic_calls_civic.tsv.gz" % R_FOLDER
     benchmark:
@@ -178,7 +178,7 @@ rule somatic_cna_civic_aggregate:
 
 rule somatic_cna_oncokb_aggregate:
     input:
-        lambda w: get_input_concatenate(w, typ="cna", db="oncokb")
+        lambda w: get_input_aggregate(w, typ="cna", db="oncokb")
     output:
         "%s/aggregate/somatic_cna/somatic_calls_oncokb.tsv.gz" % R_FOLDER
     benchmark:

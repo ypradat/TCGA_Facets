@@ -71,7 +71,7 @@ def get_input_snp_pileup(w):
         inputs.append(download_nbam="%s/mapping/download_bam_{nsample}.done" % L_FOLDER)
     return inputs
 
-def get_input_concatenate(w, typ, db):
+def get_input_aggregate(w, typ, db):
     input_folder = "%s/annotation/somatic_%s_%s_filter" % (R_FOLDER, typ, db)
 
     if config["params"][db]["run_per_sample"][typ]:

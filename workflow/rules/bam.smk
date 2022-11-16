@@ -64,7 +64,7 @@ if config["start_from"] in ["download_bam", "get_snp_pileup", "somatic_cnv_facet
         conda:
             "../envs/main.yaml"
         input:
-            get_snp_pileup_input()
+            get_input_snp_pileup
         output:
             snp_pileup="%s/calling/somatic_snp_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER,
             nbhd_snp="%s/calling/somatic_nbhd_snp/{tsample}_vs_{nsample}.tsv" % R_FOLDER

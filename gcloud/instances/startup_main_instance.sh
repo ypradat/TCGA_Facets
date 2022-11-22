@@ -1,8 +1,8 @@
 #!/bin/bash
 
+user=ypradat
 cd /home/${user}
 
-user=ypradat
 github_token=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/github_token -H "Metadata-Flavor: Google")
 zone=$(curl -H Metadata-Flavor:Google http://metadata.google.internal/computeMetadata/v1/instance/zone -s | cut -d/ -f4)
 instance_id=$(gcloud compute instances describe $(hostname) --zone=${zone} --format="get(id)")

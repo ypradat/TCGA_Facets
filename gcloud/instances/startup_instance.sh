@@ -83,6 +83,11 @@ then
   sudo apt --assume-yes install wget
 fi
 
+# install cairo
+if [[ ! -d "/usr/include/cairo" ]]
+then
+  sudo apt-get install libcairo2-dev
+fi
 
 # install locales to avoid warning "/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)"
 if ! grep -R '^LANG="nb_NO.UTF-8"' /etc/default/locale > /dev/null ; then

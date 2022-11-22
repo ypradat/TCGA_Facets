@@ -78,8 +78,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Postprocess OncoKB anntoations.")
     parser.add_argument('--input', type=str, help='Path to input table.')
-    parser.add_argument('--rules', type=str, help='Path to table of rules for cleaning.',
-                        default="../../data/resources/oncokb/OncoKB_Curation_And_Rules.xlsx")
+    parser.add_argument('--rules', type=str, help='Path to table of rules for cleaning.')
     parser.add_argument('--category', type=str, help='Choose one of cna, mut or fus.')
     parser.add_argument('--output', type=str, help='Path to output table.')
     args = parser.parse_args()

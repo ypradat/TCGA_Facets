@@ -5,6 +5,13 @@ gcloud:
   gs_bam_bucket: "gs://tcga_wxs_bam"
   gs_res_bucket: "gs://facets_tcga_results"
 
+
+target_files:
+  bed:
+    whole_exome_agilent_1.1_refsef_plus_3_boosters: resources/target_files/whole_exome_agilent_1.1_refseq_plus_3_boosters.targetIntervals.liftover_hg38.bed
+  bed_padded:
+    whole_exome_agilent_1.1_refsef_plus_3_boosters: resources/target_files/whole_exome_agilent_1.1_refseq_plus_3_boosters.targetIntervals.liftover_hg38.padded_10n.bed
+
 params:
     civic:
         code_dir: external/CivicAnnotator

@@ -3,83 +3,36 @@
 ####
 
 if config["start_from"] in ["download_bam", "get_snp_pileup", "somatic_cnv_facets"]:
-    # # Call CNV using cnv-facets which is a wrapper around facets
-    # # See https://github.com/dariober/cnv_facets
-    # # Tumor-normal mode
-    # rule somatic_cnv_facets_tumor_normal:
-    #     wildcard_constraints:
-    #         tsample="|".join([re.escape(x) for x in tsamples]),
-    #         nsample="|".join([re.escape(x) for x in nsamples])
-    #     input:
-    #         vcf=config["params"]["gatk"]["known_sites"],
-    #         snp_pileup="%s/calling/somatic_snp_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER,
-    #         nbhd_snp="%s/calling/somatic_nbhd_snp/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
-    #         env="%s/setup_main.done" % L_FOLDER
-    #     output:
-    #         vcf="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.vcf.gz" % R_FOLDER,
-    #         tbi="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.vcf.gz.tbi" % R_FOLDER,
-    #         png="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.cnv.png" % R_FOLDER,
-    #         cov="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.cov.pdf" % R_FOLDER,
-    #         spider="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.spider.pdf" % R_FOLDER
-    #     benchmark:
-    #         "%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.tsv" % B_FOLDER
-    #     log:
-    #         "%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.log" % L_FOLDER
-    #     conda:
-    #         "../envs/main.yaml"
-    #     params:
-    #         prefix="{tsample}_vs_{nsample}",
-    #         nbhd_snp=lambda wildcards, input: pd.read_table(input.nbhd_snp)["nbhd_snp"].get(0),
-    #         cval_pre=config["params"]["cnv"]["facets"]["cvals"]["pre"],
-    #         cval_pro=config["params"]["cnv"]["facets"]["cvals"]["pro"],
-    #         gbuild=config["params"]["cnv"]["facets"]["gbuild"]
-    #     threads: 1
-    #     resources:
-    #         queue="shortq",
-    #         mem_mb=28000,
-    #         time_min=90,
-    #         load=get_load_snp_pileup
-    #     shell:
-    #         """
-    #         Rscript external/cnv_facets/bin/cnv_facets.R \
-    #             -vcf {input.vcf} \
-    #             -p {input.snp_pileup} \
-    #             -snp {params.nbhd_snp} \
-    #             -o {params.prefix} \
-    #             -N {threads} \
-    #             --gbuild {params.gbuild} \
-    #             --cval {params.cval_pre} {params.cval_pro} &> {log} && \
-    #         mv {wildcards.tsample}_vs_{wildcards.nsample}.vcf.gz {output.vcf} && \
-    #         mv {wildcards.tsample}_vs_{wildcards.nsample}.vcf.gz.tbi {output.tbi} && \
-    #         mv {wildcards.tsample}_vs_{wildcards.nsample}.cnv.png {output.png} && \
-    #         mv {wildcards.tsample}_vs_{wildcards.nsample}.cov.pdf {output.cov} && \
-    #         mv {wildcards.tsample}_vs_{wildcards.nsample}.spider.pdf {output.spider}
-    #     """
-
-    # Call CNV using facets-suite which is a wrapper around facets with extensive data for QC.
-    # See https://github.com/mskcc/facets-suite
+    # Call CNV using cnv-facets which is a wrapper around facets
+    # See https://github.com/dariober/cnv_facets
     # Tumor-normal mode
     rule somatic_cnv_facets_tumor_normal:
         wildcard_constraints:
             tsample="|".join([re.escape(x) for x in tsamples]),
             nsample="|".join([re.escape(x) for x in nsamples])
         input:
+            vcf=config["params"]["gatk"]["known_sites"],
             snp_pileup="%s/calling/somatic_snp_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER,
             nbhd_snp="%s/calling/somatic_nbhd_snp/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
-            env="%s/setup_r.done" % L_FOLDER
+            bed=config["target_files"]["bed_padded"]["whole_exome_agilent_1.1_refsef_plus_3_boosters"],
+            env="%s/setup_main.done" % L_FOLDER
         output:
-            directory("%s/calling/somatic_cnv_facets_suite/{tsample}_vs_{nsample}" % R_FOLDER)
+            vcf="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.vcf.gz" % R_FOLDER,
+            tbi="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.vcf.gz.tbi" % R_FOLDER,
+            png="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.cnv.png" % R_FOLDER,
+            cov="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.cov.pdf" % R_FOLDER,
+            spider="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.spider.pdf" % R_FOLDER
         benchmark:
-            "%s/calling/somatic_cnv_facets_suite/{tsample}_vs_{nsample}.tsv" % B_FOLDER
+            "%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.tsv" % B_FOLDER
         log:
-            "%s/calling/somatic_cnv_facets_suite/{tsample}_vs_{nsample}.log" % L_FOLDER
+            "%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.log" % L_FOLDER
         conda:
-            "../envs/r.yaml"
+            "../envs/main.yaml"
         params:
             prefix="{tsample}_vs_{nsample}",
             nbhd_snp=lambda wildcards, input: pd.read_table(input.nbhd_snp)["nbhd_snp"].get(0),
+            cval_pre=config["params"]["cnv"]["facets"]["cvals"]["pre"],
             cval_pro=config["params"]["cnv"]["facets"]["cvals"]["pro"],
-            cval_purity=config["params"]["cnv"]["facets"]["cvals"]["purity"],
             gbuild=config["params"]["cnv"]["facets"]["gbuild"]
         threads: 1
         resources:
@@ -89,17 +42,66 @@ if config["start_from"] in ["download_bam", "get_snp_pileup", "somatic_cnv_facet
             load=get_load_snp_pileup
         shell:
             """
-            Rscript external/facets-suite/run-facets-wrapper.R \
-                --counts-file {input.snp_pileup} \
-                --sample-id {params.prefix} \
-                --directory {output} \
-                --purity-cval {params.cval_purity} \
-                --cval {params.cval_pro} \
-                --genome {params.gbuild} \
-                --snp-window-size {params.nbhd_snp} \
-                --facets-lib-path '' \
-                --everything &> {log}
-            """
+            Rscript external/cnv_facets/bin/cnv_facets.R \
+                -vcf {input.vcf} \
+                -p {input.snp_pileup} \
+                -snp {params.nbhd_snp} \
+                -o {params.prefix} \
+                -N {threads} \
+                -T {input.bed} \
+                --gbuild {params.gbuild} \
+                --cval {params.cval_pre} {params.cval_pro} &> {log} && \
+            mv {wildcards.tsample}_vs_{wildcards.nsample}.vcf.gz {output.vcf} && \
+            mv {wildcards.tsample}_vs_{wildcards.nsample}.vcf.gz.tbi {output.tbi} && \
+            mv {wildcards.tsample}_vs_{wildcards.nsample}.cnv.png {output.png} && \
+            mv {wildcards.tsample}_vs_{wildcards.nsample}.cov.pdf {output.cov} && \
+            mv {wildcards.tsample}_vs_{wildcards.nsample}.spider.pdf {output.spider}
+        """
+
+    # # Call CNV using facets-suite which is a wrapper around facets with extensive data for QC.
+    # # See https://github.com/mskcc/facets-suite
+    # # Tumor-normal mode
+    # rule somatic_cnv_facets_tumor_normal:
+    #     wildcard_constraints:
+    #         tsample="|".join([re.escape(x) for x in tsamples]),
+    #         nsample="|".join([re.escape(x) for x in nsamples])
+    #     input:
+    #         snp_pileup="%s/calling/somatic_snp_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER,
+    #         nbhd_snp="%s/calling/somatic_nbhd_snp/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
+    #         env="%s/setup_r.done" % L_FOLDER
+    #     output:
+    #         directory("%s/calling/somatic_cnv_facets_suite/{tsample}_vs_{nsample}" % R_FOLDER)
+    #     benchmark:
+    #         "%s/calling/somatic_cnv_facets_suite/{tsample}_vs_{nsample}.tsv" % B_FOLDER
+    #     log:
+    #         "%s/calling/somatic_cnv_facets_suite/{tsample}_vs_{nsample}.log" % L_FOLDER
+    #     conda:
+    #         "../envs/r.yaml"
+    #     params:
+    #         prefix="{tsample}_vs_{nsample}",
+    #         nbhd_snp=lambda wildcards, input: pd.read_table(input.nbhd_snp)["nbhd_snp"].get(0),
+    #         cval_pro=config["params"]["cnv"]["facets"]["cvals"]["pro"],
+    #         cval_purity=config["params"]["cnv"]["facets"]["cvals"]["purity"],
+    #         gbuild=config["params"]["cnv"]["facets"]["gbuild"]
+    #     threads: 1
+    #     resources:
+    #         queue="shortq",
+    #         mem_mb=28000,
+    #         time_min=90,
+    #         load=get_load_snp_pileup
+    #     shell:
+    #         """
+    #         Rscript external/facets-suite/run-facets-wrapper.R \
+    #             --counts-file {input.snp_pileup} \
+    #             --sample-id {params.prefix} \
+    #             --directory {output} \
+    #             --purity-cval {params.cval_purity} \
+    #             --cval {params.cval_pro} \
+    #             --genome {params.gbuild} \
+    #             --snp-window-size {params.nbhd_snp} \
+    #             --facets-lib-path '' \
+    #             --everything &> {log}
+    #         """
 
 if config["start_from"] in ["somatic_cnv_process_vcf"]:
     # Get snp pileup table

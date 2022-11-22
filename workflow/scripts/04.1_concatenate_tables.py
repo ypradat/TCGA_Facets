@@ -81,8 +81,9 @@ def main(args):
     for i, file in enumerate(files):
         df = read_table(file)
         dfs.append(df)
-        if (i+1)%(len(files)//100)==0:
-            print("-processed %d/%d files" % (i+1, len(files)), flush=True)
+        if len(files)>100:
+            if (i+1)%(len(files)//100)==0:
+                print("-processed %d/%d files" % (i+1, len(files)), flush=True)
 
     # concatenate
     print("-concatenating %d tables..." % len(dfs), flush=True, end="")

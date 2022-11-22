@@ -403,8 +403,10 @@ main <- function(args){
   }
 
   # undo renaming by cnv_facets to have only numeric chromosome names
-  df_cnv_tab[df_cnv_tab$chrom == 'X', "chrom"] <- "23"
-  df_cnv_tab[df_cnv_tab$chrom == 'Y', "chrom"] <- "24"
+  mask_x <- df_cnv_tab$chrom == 'X'
+  if (sum(mask_x)>0)  df_cnv_tab[mask_x, "chrom"] <- "23"
+  mask_y <- df_cnv_tab$chrom == 'Y'
+  if (sum(mask_y)>0)  df_cnv_tab[mask_y, "chrom"] <- "24"
   df_cnv_tab$chrom <- as.numeric(df_cnv_tab$chrom)
 
   # compute chromsome arm CNA
@@ -621,8 +623,10 @@ main <- function(args){
 
   # if 'chr' prefix was present, set it back
   # redo renaming of chromosomes
-  df_cnv_tab[df_cnv_tab$chrom == 23, "chrom"] <- "X"
-  df_cnv_tab[df_cnv_tab$chrom == 24, "chrom"] <- "Y"
+  mask_x <- df_cnv_tab$chrom == 23
+  if (sum(mask_x)>0)  df_cnv_tab[mask_x, "chrom"] <- "X"
+  mask_y <- df_cnv_tab$chrom == 24
+  if (sum(mask_y)>0)  df_cnv_tab[mask_y, "chrom"] <- "Y"
 
   if (chr_prefix){
     df_cnv_tab$chrom <- paste0("chr", df_cnv_tab$chrom)

@@ -86,7 +86,7 @@ fi
 # install cairo
 if [[ ! -d "/usr/include/cairo" ]]
 then
-  sudo apt-get install libcairo2-dev
+  sudo apt-get install -yq libcairo2-dev
 fi
 
 # install locales to avoid warning "/usr/bin/bash: warning: setlocale: LC_ALL: cannot change locale (en_US.UTF-8)"

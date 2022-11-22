@@ -23,7 +23,6 @@ while getopts ":a:b:t: h" opt; do
   esac
 done
 
-printf "github token: %s\n" "${github_token}"
 main_indices=($(seq ${main_min} 1 ${main_max}))
 
 for main_index in "${main_indices[@]}"

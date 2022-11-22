@@ -15,7 +15,7 @@ if config["start_from"] in ["download_bam", "get_snp_pileup", "somatic_cnv_facet
             snp_pileup="%s/calling/somatic_snp_pileup/{tsample}_vs_{nsample}.csv.gz" % R_FOLDER,
             nbhd_snp="%s/calling/somatic_nbhd_snp/{tsample}_vs_{nsample}.tsv" % R_FOLDER,
             bed=config["target_files"]["bed_padded"]["whole_exome_agilent_1.1_refsef_plus_3_boosters"],
-            env="%s/setup_main.done" % L_FOLDER
+            env="%s/setup_r.done" % L_FOLDER
         output:
             vcf="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.vcf.gz" % R_FOLDER,
             tbi="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.vcf.gz.tbi" % R_FOLDER,
@@ -27,7 +27,7 @@ if config["start_from"] in ["download_bam", "get_snp_pileup", "somatic_cnv_facet
         log:
             "%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.log" % L_FOLDER
         conda:
-            "../envs/main.yaml"
+            "../envs/r.yaml"
         params:
             prefix="{tsample}_vs_{nsample}",
             nbhd_snp=lambda wildcards, input: pd.read_table(input.nbhd_snp)["nbhd_snp"].get(0),
@@ -110,8 +110,6 @@ if config["start_from"] in ["somatic_cnv_process_vcf"]:
             "%s/calling/get_cnv_vcf_{tsample}_vs_{nsample}.log" % L_FOLDER
         benchmark:
             "%s/calling/get_cnv_vcf_{tsample}_vs_{nsample}.tsv" % B_FOLDER
-        conda:
-            "../envs/main.yaml"
         output:
             vcf="%s/calling/somatic_cnv_facets/{tsample}_vs_{nsample}.vcf.gz" % R_FOLDER,
         params:

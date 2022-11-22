@@ -130,6 +130,8 @@ then
 	  '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "gsutil cp external done."}' \
 	  --payload-type=json \
 	  --severity=INFO
+else
+  gsutil -m rsync -r gs://facets_tcga/external external
 fi
 
 if [[ ! -d "resources" ]]
@@ -141,6 +143,11 @@ then
 	  '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "gsutil cp resources done."}' \
 	  --payload-type=json \
 	  --severity=INFO
+
+  # in order to suppress warning message from snp-pileup
+  touch resources/hg38_gatk/*.tbi
+else
+  gsutil -m rsync -r gs://facets_tcga/resources resources
 
   # in order to suppress warning message from snp-pileup
   touch resources/hg38_gatk/*.tbi

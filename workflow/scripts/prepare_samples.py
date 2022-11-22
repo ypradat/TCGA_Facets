@@ -17,6 +17,19 @@ def add_pairs_from_sub(df_tnp_sub, cum_batch_size, cum_file_size, i_tnp_seen, r_
     return cum_batch_size, cum_file_size
 
 
+def convert_num_to_str(x):
+    try:
+        y = "%d" % int(x)
+    except:
+        try:
+            y = "%f" % float(x)
+            if y=="nan":
+                y = x
+        except:
+            y = x
+    return y
+
+
 def main(args):
     # read samples data
     filepath = "../../data/tcga/clinical/curated_other/bio_tcga_all_curated.tsv"
@@ -36,7 +49,7 @@ def main(args):
 
     # cols selection
     cols_ids = ["Sample_Id", "File_Id_Gdc", "File_Name_Gdc"]
-    cols_bio = ["Biopsy_Type", "Sample_Type"]
+    cols_bio = ["Biopsy_Type", "Sample_Type", "Capture_Kit", "Capture_Kit_Target_Region", "Total_Reads_Gdc"]
 
     # add Project_TCGA_More, MSKCC_Oncotree and Civic_Disease
     filepath = "../../data/tcga/clinical/curated_other/cln_tcga_all_curated.tsv"
@@ -62,7 +75,7 @@ def main(args):
     df_sam = df_sam.merge(df_bio_isb, how="left", on="Sample_Id")
 
     # drop samples with missing values
-    df_sam = df_sam.dropna(how="any")
+    df_sam = df_sam.dropna(subset=["Gender"], how="any")
 
     # extract File_Name and Index_File_Name
     df_sam["File_Name"] = df_sam["File_Name_Key"].apply(lambda x: x.split("/")[-1])
@@ -70,20 +83,26 @@ def main(args):
     df_sam["File_Size"] = df_sam["File_Size"].astype(int)
     df_sam["Index_File_Size"] = df_sam["Index_File_Size"].astype(int)
 
-    df_sam_cur = pd.read_table("config/samples.all.tsv")
-    df_sam = df_sam.loc[df_sam["Sample_Id"].isin(df_sam_cur["Sample_Id"])]
+    # df_sam_cur = pd.read_table("../../../TCGA_Facets/config/samples.all.tsv")
+    # df_sam = df_sam.loc[df_sam["Sample_Id"].isin(df_sam_cur["Sample_Id"])]
 
     # prepare table of tumor/normal pairs
     cols_attributes = [x for x in cols if x not in cols_ids + ["Sample_Type", "Biopsy_Type"]]
+    cols_tn = ["Sample_Type", "File_Size", "Capture_Kit", "Capture_Kit_Target_Region", "Total_Reads_Gdc"]
     df_sam_dna_n = df_sam.loc[df_sam["Sample_Type"]=="DNA_N"][cols_attributes + ["Sample_Id", "File_Size"]]
-    df_sam_dna_n = df_sam_dna_n.rename(columns={"Sample_Id": "DNA_N", "File_Size": "File_Size_N"})
+    dt_rename_n = {**{"Sample_Id": "DNA_N", "File_Size": "File_Size_N"}, **{c: "%s_N" % c for c in cols_tn}}
+    df_sam_dna_n = df_sam_dna_n.rename(columns=dt_rename_n)
 
     df_sam_dna_t = df_sam.loc[df_sam["Sample_Type"]=="DNA_T"][cols_attributes + ["Sample_Id", "File_Size"]]
-    df_sam_dna_t = df_sam_dna_t.rename(columns={"Sample_Id": "DNA_T", "File_Size": "File_Size_T"})
-    df_tnp = df_sam_dna_t.merge(df_sam_dna_n, how="outer", on=cols_attributes)
+    dt_rename_t = {**{"Sample_Id": "DNA_T", "File_Size": "File_Size_T"}, **{c: "%s_T" % c for c in cols_tn}}
+    df_sam_dna_t = df_sam_dna_t.rename(columns=dt_rename_t)
+
+    cols_on = [x for x in cols_attributes if x not in cols_tn]
+    df_tnp = df_sam_dna_t.merge(df_sam_dna_n, how="outer", on=cols_on)
 
     # drop samples with missing values
-    df_tnp = df_tnp.dropna(how="any").copy().reset_index(drop=True)
+    cols = ["Gender", "MSKCC_Oncotree", "Civic_Disease", "DNA_T", "DNA_T"]
+    df_tnp = df_tnp.dropna(subset=cols, how="any").copy().reset_index(drop=True)
     df_tnp["DNA_P"] = df_tnp[["DNA_T", "DNA_N"]].apply("_vs_".join, axis=1)
     df_tnp["File_Size_P"] = (df_tnp["File_Size_T"] + df_tnp["File_Size_N"])/1024**3
 
@@ -144,6 +163,16 @@ def main(args):
     # add file size in Gb
     df_sam.insert(df_sam.shape[1]-1, "Total_Size_Gb", (df_sam["File_Size"]+df_sam["Index_File_Size"])/1024**3)
 
+    # format numeric
+    dtypes = df_sam.dtypes
+    cols_num = dtypes.loc[dtypes=="float64"].index.tolist()
+    for col_num in cols_num:
+        df_sam[col_num] = df_sam[col_num].apply(convert_num_to_str)
+    dtypes = df_tnp.dtypes
+    cols_num = dtypes.loc[dtypes=="float64"].index.tolist()
+    for col_num in cols_num:
+        df_tnp[col_num] = df_tnp[col_num].apply(convert_num_to_str)
+
     # save table of samples
     df_sam.to_csv(args.out_sam, index=False, sep="\t")
 
@@ -157,7 +186,7 @@ if __name__ == "__main__":
     parser.add_argument("--out_tnp", type=str, help="Path to table of tumor/normal pairs.",
                         default="config/tumor_normal_pairs.all.tsv")
     parser.add_argument("--max_batch_size", type=int, help="Max number of tumor/normal pairs for one batch.",
-                        default=8)
+                        default=16)
     args = parser.parse_args()
 
     main(args)

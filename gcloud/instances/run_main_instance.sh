@@ -2,7 +2,7 @@
 
 usage() { echo "$0 Usage:" && grep " .)\ #" $0; exit 0; }
 
-while getopts ":a:b:t h" opt; do
+while getopts ":a:b:t: h" opt; do
   case $opt in
     a) # Minimum main index to be run.
       main_min="$OPTARG"
@@ -23,6 +23,7 @@ while getopts ":a:b:t h" opt; do
   esac
 done
 
+printf "github token: %s\n" "${github_token}"
 main_indices=($(seq ${main_min} 1 ${main_max}))
 
 for main_index in "${main_indices[@]}"

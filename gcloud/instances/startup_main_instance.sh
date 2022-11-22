@@ -1,10 +1,12 @@
 #!/bin/bash
 
-cd /home/ypradat
+cd /home/${user}
 
+user=ypradat
+github_token=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/github_token -H "Metadata-Flavor: Google")
 zone=$(curl -H Metadata-Flavor:Google http://metadata.google.internal/computeMetadata/v1/instance/zone -s | cut -d/ -f4)
 instance_id=$(gcloud compute instances describe $(hostname) --zone=${zone} --format="get(id)")
-gcloud_log_vm=/home/ypradat/startup_gcloud_vm.log
+gcloud_log_vm=/home/${user}/startup_gcloud_vm.log
 
 exec 3>&1 4>&2 >${gcloud_log_vm} 2>&1
 
@@ -38,20 +40,20 @@ sudo dpkg-reconfigure -f noninteractive locales
 mkdir -p miniconda3
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda3/miniconda.sh
 bash miniconda3/miniconda.sh -b -u -p miniconda3
-rm -rf /home/ypradat/miniconda3/miniconda.sh
+rm -rf /home/${user}/miniconda3/miniconda.sh
 
 # set the path in order to find the conda command
-export PATH="/home/ypradat/miniconda3/bin:/home/ypradat/miniconda3/condabin:$PATH"
+export PATH="/home/${user}/miniconda3/bin:/home/${user}/miniconda3/condabin:$PATH"
 
 # activate
-source activate /home/ypradat/miniconda3
+source activate /home/${user}/miniconda3
 conda install -y pandas
 
 # get the code
-git clone https://ypradat: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@github.com/ypradat/TCGA_Facets.git /home/ypradat/TCGA_Facets
+git clone https://${user}:${github_token}@github.com/${user}/TCGA_Facets.git /home/${user}/TCGA_Facets
 
 # get resources and external
-cd /home/ypradat/TCGA_Facets
+cd /home/${user}/TCGA_Facets
 
 # set permissions to user
-sudo chown -R ypradat /home/ypradat
+sudo chown -R ${user} /home/${user}

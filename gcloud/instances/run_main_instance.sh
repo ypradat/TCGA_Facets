@@ -2,13 +2,16 @@
 
 usage() { echo "$0 Usage:" && grep " .)\ #" $0; exit 0; }
 
-while getopts ":a:b h" opt; do
+while getopts ":a:b:t h" opt; do
   case $opt in
     a) # Minimum main index to be run.
       main_min="$OPTARG"
       ;;
     b) # Maximum main index to be run.
       main_max="$OPTARG"
+      ;;
+    t) # Github token for downloading the pipeline code.
+      github_token="$OPTARG"
       ;;
     h) # Display help.
       usage
@@ -42,5 +45,6 @@ do
     --shielded-vtpm \
     --shielded-integrity-monitoring \
     --reservation-affinity=any \
-    --metadata-from-file=startup-script=./gcloud/instances/startup_main_instance.sh
+    --metadata-from-file=startup-script=./gcloud/instances/startup_main_instance.sh \
+    --metadata=github_token=${github_token}
 done

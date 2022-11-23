@@ -4,6 +4,7 @@ user=ypradat
 batch_index=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/batch_index -H "Metadata-Flavor: Google")
 start_from=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/start_from -H "Metadata-Flavor: Google")
 github_token=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/github_token -H "Metadata-Flavor: Google")
+update_date_min=$(curl http://metadata.google.internal/computeMetadata/v1/instance/attributes/update_date_min -H "Metadata-Flavor: Google")
 zone=$(curl -H Metadata-Flavor:Google http://metadata.google.internal/computeMetadata/v1/instance/zone -s | cut -d/ -f4)
 instance_id=$(gcloud compute instances describe $(hostname) --zone=${zone} --format="get(id)")
 gcloud_log_name=startup-gcloud-vm-${batch_index}
@@ -154,19 +155,6 @@ else
 fi
 
 
-# select samples
-if [[ ! -f "config/samples.tsv" ]]
-then
-  awk -F '\t' -v i="${batch_index}" 'NR==1; {if($(NF)==i) print $0}' config/samples.all.tsv > config/samples.tsv
-  awk -F '\t' -v i="${batch_index}" 'NR==1; {if($(NF)==i) print $0}' config/tumor_normal_pairs.all.tsv > config/tumor_normal_pairs.tsv
-
-  # log message
-  gcloud logging write ${gcloud_log_name} \
-    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "samples selection done."}' \
-    --payload-type=json \
-    --severity=INFO
-fi
-
 # setup config yaml
 if ! grep -R '^start_from:' config/config.yaml > /dev/null ; then
   printf "start_from: %s" "${start_from}" >> config/config.yaml
@@ -242,6 +230,24 @@ fi
 # activate snakemake and run
 source activate ${snakemake_env_dir}
 
+# select samples
+if [[ ! -f "config/samples.tsv" ]]
+then
+  awk -F '\t' -v i="${batch_index}" 'NR==1; {if($(NF)==i) print $0}' config/samples.all.tsv > config/samples.tsv
+  awk -F '\t' -v i="${batch_index}" 'NR==1; {if($(NF)==i) print $0}' config/tumor_normal_pairs.all.tsv > config/tumor_normal_pairs.tsv
+
+  python gcloud/others/select_tumor_normal_pairs.py \
+    --pairs_table config/tumor_normal_pairs.tsv \
+    --bucket_gs_uri gs://facets_tcga_results \
+    --update_date_min ${update_date_min}
+
+  # log message
+  gcloud logging write ${gcloud_log_name} \
+    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "samples selection done."}' \
+    --payload-type=json \
+    --severity=INFO
+fi
+
 # set permissions to user
 sudo chown -R ${user} /home/${user}
 
@@ -271,8 +277,8 @@ if [[ ${status_failed_second} != 0 ]] && [[ ${status_failed_first} != 0 ]] && [[
   fi
 elif [[ ${status_failed_first} == 0 ]]; then
   if [[ ${start_from} =~ ^(download_bam|get_snp_pileup|somatic_cnv_facets)$ ]]; then
-    load=115
-    jobs=50
+    load=65
+    jobs=25
   else
     load=4
     jobs=4
@@ -284,8 +290,6 @@ elif [[ ${status_failed_first} == 0 ]]; then
     --payload-type=json \
     --severity=INFO
 
-  # removing existing failed log
-  gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
 elif [[ ${status_failed_second} == 0 ]] ; then
   # third time this batch is run, reduce the maximum number of jobs that can run in parallel to 1
   if [[ ${start_from} =~ ^(download_bam|get_snp_pileup|somatic_cnv_facets)$ ]]; then
@@ -302,8 +306,6 @@ elif [[ ${status_failed_second} == 0 ]] ; then
     --payload-type=json \
     --severity=INFO
 
-  # removing existing failed log
-  gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
 elif [[ ${status_failed_third_oom} == 0 ]] ; then
   # fourth time this batch is run, reduce the maximum number of jobs that can run in parallel to 1
   load=115
@@ -314,9 +316,6 @@ elif [[ ${status_failed_third_oom} == 0 ]] ; then
     '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "this batch has already failed three times, running on a larger VM with jobs at '${jobs}'."}' \
     --payload-type=json \
     --severity=INFO
-
-  # removing existing failed log
-  gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_third_oom_${batch_index}.log
 fi
 
 # run the pipeline, rerunning incomplete jobs
@@ -367,6 +366,8 @@ if [[ ${status_failed_cur} != 0 ]]; then
       --payload-type=json \
       --severity=WARNING
 
+    # removing existing failed log and add new log
+    gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
     gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
   elif [[ ${status_failed_second} == 0 ]]; then
     # there is a failure log after a second run of this batch
@@ -382,15 +383,20 @@ if [[ ${status_failed_cur} != 0 ]]; then
         --payload-type=json \
         --severity=WARNING
 
+      # removing existing failed log and add new log
+      gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
       gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_third_oom_${batch_index}.log
-    else
-      gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_third_oth_${batch_index}.log
 
+    else
       # log message
       gcloud logging write ${gcloud_log_name} \
         '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the third time with not oom error."}' \
         --payload-type=json \
         --severity=ERROR
+
+      # removing existing failed log and add new log
+      gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
+      gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_third_oth_${batch_index}.log
 
       # upload whatever was done
       python -u gcloud/buckets/populate_results_gs_bucket.py \
@@ -405,6 +411,8 @@ if [[ ${status_failed_cur} != 0 ]]; then
       --payload-type=json \
       --severity=ERROR
 
+    # removing existing failed log and add new log
+    gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_third_oom_${batch_index}.log
     gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_fourth_${batch_index}.log
 
     # upload whatever was done

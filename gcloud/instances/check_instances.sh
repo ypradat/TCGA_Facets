@@ -2,7 +2,7 @@
 
 usage() { echo "$0 Usage:" && grep " .)\ #" $0; exit 0; }
 
-while getopts ":m:f:t: h" opt; do
+while getopts ":m:f:t:u: h" opt; do
   case $opt in
     m) # time in seconds separating two consecutive checks.
       time="$OPTARG"
@@ -13,6 +13,9 @@ while getopts ":m:f:t: h" opt; do
       ;;
     t) # Github token for downloading the pipeline code.
       github_token="$OPTARG"
+      ;;
+    u) # A given pair will be ingored only if expected ouptut files already exist and were updated after this date. DD/MM/YYYY format.
+      update_date_min="$OPTARG"
       ;;
     h) # Display help.
       usage
@@ -90,7 +93,12 @@ do
       "${#indices_deleted_first[@]}"
     for index_deleted_first in "${indices_deleted_first[@]}"
     do
-      bash gcloud/instances/run_instances.sh -i ${index_deleted_first} -s -f ${start_from} -t ${github_token}
+      bash gcloud/instances/run_instances.sh \
+        -i ${index_deleted_first} \
+        -s \
+        -f ${start_from} \
+        -t ${github_token} \
+        -u ${update_date_min}
     done
   fi
 
@@ -100,7 +108,12 @@ do
       "${#indices_deleted_second[@]}"
     for index_deleted_second in "${indices_deleted_second[@]}"
     do
-      bash gcloud/instances/run_instances.sh -i ${index_deleted_second} -s -f ${start_from} -t ${github_token}
+      bash gcloud/instances/run_instances.sh \
+        -i ${index_deleted_second} \
+        -s \
+        -f ${start_from} \
+        -t ${github_token} \
+        -u ${update_date_min}
     done
   fi
 

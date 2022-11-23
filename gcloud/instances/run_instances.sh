@@ -5,7 +5,7 @@ usage() { echo "$0 Usage:" && grep " .)\ #" $0; exit 0; }
 dry_run="no"
 skip_bam_copy="no"
 
-while getopts ":a:b:i:f:t::ns h" opt; do
+while getopts ":a:b:i:f:t:u::ns h" opt; do
   case $opt in
     a) # Minimum batch index to be run. Ignored if -i is used.
       batch_min="$OPTARG"
@@ -22,6 +22,9 @@ while getopts ":a:b:i:f:t::ns h" opt; do
       ;;
     t) # Github token for downloading the pipeline code.
       github_token="$OPTARG"
+      ;;
+    u) # A given pair will be ingored only if expected ouptut files already exist and were updated after this date. DD/MM/YYYY format.
+      update_date_min="$OPTARG"
       ;;
     n) # If -n option is used, only print messages will be displayed and no instance will be started (dry run).
       dry_run="yes"
@@ -147,7 +150,7 @@ EOF
 --provisioning-model=spot \
 --preemptible \
 --metadata-from-file=startup-script=./gcloud/instances/startup_instance.sh,shutdown-script=./gcloud/instances/shutdown_instance.sh \
---metadata=batch_index=${batch_index},start_from=${start_from},github_token=${github_token}
+--metadata=batch_index=${batch_index},start_from=${start_from},github_token=${github_token},update_date_min=${update_date_min}
 EOF
   else
     # Create the instance and run the pipeline via the startup script
@@ -171,6 +174,6 @@ EOF
       --provisioning-model=spot \
       --preemptible \
       --metadata-from-file=startup-script=./gcloud/instances/startup_instance.sh,shutdown-script=./gcloud/instances/shutdown_instance.sh \
-      --metadata=batch_index=${batch_index},start_from=${start_from},github_token=${github_token}
+      --metadata=batch_index=${batch_index},start_from=${start_from},github_token=${github_token},update_date_min=${update_date_min}
   fi
 done

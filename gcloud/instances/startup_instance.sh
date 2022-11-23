@@ -231,6 +231,8 @@ fi
 source activate ${snakemake_env_dir}
 
 # select samples
+cd /home/${user}/TCGA_Facets
+
 if [[ ! -f "config/samples.tsv" ]]
 then
   awk -F '\t' -v i="${batch_index}" 'NR==1; {if($(NF)==i) print $0}' config/samples.all.tsv > config/samples.tsv
@@ -320,7 +322,6 @@ fi
 
 # run the pipeline, rerunning incomplete jobs
 # log message
-cd /home/${user}/TCGA_Facets
 
 gcloud logging write ${gcloud_log_name} \
   '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "started pipeline."}' \

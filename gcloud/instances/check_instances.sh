@@ -60,20 +60,25 @@ do
     --logs_uri "gs://facets_tcga_results/logs/gcloud_failed" \
     --prefix "startup_gcloud_vm_second_" 2> >(grep -v "WARNING") && printf '\0' )
 
-  IFS=$'\n' read -r -d '' -a indices_deleted_third < <( python -u gcloud/others/print_batch_indices.py \
+  IFS=$'\n' read -r -d '' -a indices_deleted_third_oom < <( python -u gcloud/oomers/print_batch_indices.py \
     --logs_uri "gs://facets_tcga_results/logs/gcloud_failed" \
-    --prefix "startup_gcloud_vm_third_" 2> >(grep -v "WARNING") && printf '\0' )
+    --prefix "startup_gcloud_vm_third_oom_" 2> >(grep -v "WARNING") && printf '\0' )
+
+  IFS=$'\n' read -r -d '' -a indices_deleted_third_oth < <( python -u gcloud/others/print_batch_indices.py \
+    --logs_uri "gs://facets_tcga_results/logs/gcloud_failed" \
+    --prefix "startup_gcloud_vm_third_oth_" 2> >(grep -v "WARNING") && printf '\0' )
 
   printf -- " %s instance(s) ALIVE/%s instance(s) have failed\n" \
     "${#instances_alive[@]}" \
-    "$(( ${#indices_deleted_first[@]} + ${#indices_deleted_second[@]} + ${#indices_deleted_third[@]} ))"
+    "$(( ${#indices_deleted_first[@]} + ${#indices_deleted_second[@]} + ${#indices_deleted_third_oom[@]} + ${#indices_deleted_third_oth[@]} ))"
 
-  printf -- " %s RUNNING/%s TERMINATED/%s FAILED 1st run/%s FAILED 2nd run/%s FAILED 3rd run\n" \
+  printf -- " %s RUNNING/%s TERMINATED/%s FAILED 1st run/%s FAILED 2nd run/%s FAILED 3rd run oom/%s FAILED 3rd run other\n" \
     "${#instances_running[@]}" \
     "${#instances_terminated[@]}" \
     "${#indices_deleted_first[@]}" \
     "${#indices_deleted_second[@]}" \
-    "${#indices_deleted_third[@]}" 
+    "${#indices_deleted_third_oom[@]}" \
+    "${#indices_deleted_third_oth[@]}"
   
   if (( ${#instances_terminated[@]} != 0 ))
   then

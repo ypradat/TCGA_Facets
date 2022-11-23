@@ -55,21 +55,25 @@ do
   IFS=$'\n' read -r -d '' -a indices_deleted_first < <( python -u gcloud/others/print_batch_indices.py \
     --logs_uri "gs://facets_tcga_results/logs/gcloud_failed" \
     --prefix "startup_gcloud_vm_first_" \
+    --ignore_terminated \
     --ignore_running 2> >(grep -v "WARNING") && printf '\0' )
 
   IFS=$'\n' read -r -d '' -a indices_deleted_second < <( python -u gcloud/others/print_batch_indices.py \
     --logs_uri "gs://facets_tcga_results/logs/gcloud_failed" \
     --prefix "startup_gcloud_vm_second_" \
+    --ignore_terminated \
     --ignore_running 2> >(grep -v "WARNING") && printf '\0' )
 
   IFS=$'\n' read -r -d '' -a indices_deleted_third_oom < <( python -u gcloud/others/print_batch_indices.py \
     --logs_uri "gs://facets_tcga_results/logs/gcloud_failed" \
     --prefix "startup_gcloud_vm_third_oom_" \
+    --ignore_terminated \
     --ignore_running 2> >(grep -v "WARNING") && printf '\0' )
 
   IFS=$'\n' read -r -d '' -a indices_deleted_third_oth < <( python -u gcloud/others/print_batch_indices.py \
     --logs_uri "gs://facets_tcga_results/logs/gcloud_failed" \
     --prefix "startup_gcloud_vm_third_oth_" \
+    --ignore_terminated \
     --ignore_running 2> >(grep -v "WARNING") && printf '\0' )
 
   printf -- " %s instance(s) ALIVE/%s instance(s) have failed\n" \

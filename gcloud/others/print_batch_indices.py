@@ -36,15 +36,15 @@ def remove_none_entries(l):
     return [e for e in l if e is not None]
 
 
-def remove_running(l):
+def remove_status(l, status):
     cmd_gcloud = "gcloud compute instances list " + \
             "--zones=us-central1-a " + \
-            '--filter="name~facets-tcga-[\d]+ AND status=RUNNING" ' + \
+            '--filter="name~facets-tcga-[\d]+ AND status=%s" ' % status + \
             '--format="value(NAME)"'
     cmd_output = subprocess.run(cmd_gcloud, shell=True, capture_output=True)
     cmd_stdout = cmd_output.stdout.decode("utf-8").split("\n")
-    batch_running = [int(x.split("facets-tcga-")[1]) for x in cmd_stdout if x.startswith("facets-tcga-")]
-    return [e for e in l if not e in batch_running]
+    batch_status = [int(x.split("facets-tcga-")[1]) for x in cmd_stdout if x.startswith("facets-tcga-")]
+    return [e for e in l if not e in batch_status]
 
 
 def main(args):
@@ -56,7 +56,9 @@ def main(args):
     batch_list = [get_batch_index(log, prefix=args.prefix) for log in batches_log_names]
     batch_list = remove_none_entries(batch_list)
     if args.ignore_running:
-        batch_list = remove_running(batch_list)
+        batch_list = remove_status(batch_list, status="RUNNING")
+    if args.ignore_terminated:
+        batch_list = remove_status(batch_list, status="TERMINATED")
     batch_list = sorted(batch_list)
 
     # select indices according to user specifications
@@ -83,6 +85,9 @@ if __name__ == "__main__":
                         default=-1)
     parser.add_argument('--ignore_running', action="store_true",
                         help='If used, indices of running batches are ignored.',
+                        default=False)
+    parser.add_argument('--ignore_terminated', action="store_true",
+                        help='If used, indices of terminated batches are ignored.',
                         default=False)
     args = parser.parse_args()
 

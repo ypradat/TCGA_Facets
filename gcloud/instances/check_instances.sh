@@ -54,19 +54,23 @@ do
   # use logs in the folder gs://facets_tcga_results/logs/gcloud_failed to identify instances that have failed
   IFS=$'\n' read -r -d '' -a indices_deleted_first < <( python -u gcloud/others/print_batch_indices.py \
     --logs_uri "gs://facets_tcga_results/logs/gcloud_failed" \
-    --prefix "startup_gcloud_vm_first_" 2> >(grep -v "WARNING") && printf '\0' )
+    --prefix "startup_gcloud_vm_first_" \
+    --ignore_running 2> >(grep -v "WARNING") && printf '\0' )
 
   IFS=$'\n' read -r -d '' -a indices_deleted_second < <( python -u gcloud/others/print_batch_indices.py \
     --logs_uri "gs://facets_tcga_results/logs/gcloud_failed" \
-    --prefix "startup_gcloud_vm_second_" 2> >(grep -v "WARNING") && printf '\0' )
+    --prefix "startup_gcloud_vm_second_" \
+    --ignore_running 2> >(grep -v "WARNING") && printf '\0' )
 
   IFS=$'\n' read -r -d '' -a indices_deleted_third_oom < <( python -u gcloud/others/print_batch_indices.py \
     --logs_uri "gs://facets_tcga_results/logs/gcloud_failed" \
-    --prefix "startup_gcloud_vm_third_oom_" 2> >(grep -v "WARNING") && printf '\0' )
+    --prefix "startup_gcloud_vm_third_oom_" \
+    --ignore_running 2> >(grep -v "WARNING") && printf '\0' )
 
   IFS=$'\n' read -r -d '' -a indices_deleted_third_oth < <( python -u gcloud/others/print_batch_indices.py \
     --logs_uri "gs://facets_tcga_results/logs/gcloud_failed" \
-    --prefix "startup_gcloud_vm_third_oth_" 2> >(grep -v "WARNING") && printf '\0' )
+    --prefix "startup_gcloud_vm_third_oth_" \
+    --ignore_running 2> >(grep -v "WARNING") && printf '\0' )
 
   printf -- " %s instance(s) ALIVE/%s instance(s) have failed\n" \
     "${#instances_alive[@]}" \

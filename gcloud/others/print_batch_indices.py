@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 @created: Oct 19 2022
-@modified: Oct 19 2022
+@modified: Nov 23 2022
 @author: Yoann Pradat
 
     CentraleSupelec
@@ -36,6 +36,17 @@ def remove_none_entries(l):
     return [e for e in l if e is not None]
 
 
+def remove_running(l):
+    cmd_gcloud = "gcloud compute instances list " + \
+            "--zones=us-central1-a " + \
+            '--filter="name~facets-tcga-[\d]+ AND status=RUNNING" ' + \
+            '--format="value(NAME)"'
+    cmd_output = subprocess.run(cmd_gcloud, shell=True, capture_output=True)
+    cmd_stdout = cmd_output.stdout.decode("utf-8").split("\n")
+    batch_running = [int(x.split("facets-tcga-")[1]) for x in cmd_stdout if x.startswith("facets-tcga-")]
+    return [e for e in l if not e in batch_running]
+
+
 def main(args):
     # list batches
     cmd_gsutil = "gsutil ls %s" % args.logs_uri
@@ -44,6 +55,8 @@ def main(args):
     batches_log_names = [os.path.basename(file) for file in stdout.split()]
     batch_list = [get_batch_index(log, prefix=args.prefix) for log in batches_log_names]
     batch_list = remove_none_entries(batch_list)
+    if args.ignore_running:
+        batch_list = remove_running(batch_list)
     batch_list = sorted(batch_list)
 
     # select indices according to user specifications
@@ -66,9 +79,11 @@ if __name__ == "__main__":
                         default="startup_gcloud_vm_first_")
     parser.add_argument('--batch_min', type=int, help='Minimum index of batches to be printed.',
                         default=1)
-    parser.add_argument('--batch_max', type=int,
-                        help='Maximum index of batches to be printed.',
+    parser.add_argument('--batch_max', type=int, help='Maximum index of batches to be printed.',
                         default=-1)
+    parser.add_argument('--ignore_running', action="store_true",
+                        help='If used, indices of running batches are ignored.',
+                        default=False)
     args = parser.parse_args()
 
     main(args)

@@ -55,7 +55,7 @@ def main(args):
                                     # if both tsample and nsample are NA, upload the whole folder
                                     cmd = "gsutil -m rsync -r %s %s" % (folder_vm, folder_gs)
                                     cmds.append(cmd)
-                                else
+                                else:
                                     # otherwise, upload only the files corresponding to this pair
                                     pair = "%s_vs_%s" % (args.tsample, args.nsample)
                                     pair_files = [x for x in os.listdir(folder_vm) if x.startswith(pair)]

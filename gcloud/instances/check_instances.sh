@@ -76,13 +76,29 @@ do
     --ignore_terminated \
     --ignore_running 2> >(grep -v "WARNING") && printf '\0' )
 
-  printf -- " %s instance(s) ALIVE/%s instance(s) have failed\n" \
+  # use logs in the folder gs://facets_tcga_results/logs/gcloud_rerun to identify instances that need rerunning
+  IFS=$'\n' read -r -d '' -a indices_rerun_first < <( python -u gcloud/others/print_batch_indices.py \
+    --logs_uri "gs://facets_tcga_results/logs/gcloud_rerun" \
+    --prefix "startup_gcloud_vm_first_" \
+    --ignore_terminated \
+    --ignore_running 2> >(grep -v "WARNING") && printf '\0' )
+
+  IFS=$'\n' read -r -d '' -a indices_rerun_second < <( python -u gcloud/others/print_batch_indices.py \
+    --logs_uri "gs://facets_tcga_results/logs/gcloud_rerun" \
+    --prefix "startup_gcloud_vm_second_" \
+    --ignore_terminated \
+    --ignore_running 2> >(grep -v "WARNING") && printf '\0' )
+
+  printf -- " %s instance(s) ALIVE/%s instance(s) need rerunning/%s instance(s) have failed\n" \
     "${#instances_alive[@]}" \
+    "$(( ${#indices_rerun_first[@]} + ${#indices_rerun_second[@]} ))" \
     "$(( ${#indices_deleted_first[@]} + ${#indices_deleted_second[@]} + ${#indices_deleted_third_oom[@]} + ${#indices_deleted_third_oth[@]} ))"
 
-  printf -- " %s RUNNING/%s TERMINATED/%s FAILED 1st run/%s FAILED 2nd run/%s FAILED 3rd run oom/%s FAILED 3rd run other\n" \
+  printf -- " %s RUNNING/%s TERMINATED/%s RERUN 1st run/%s RERUN 2nd run/%s FAILED 1st run/%s FAILED 2nd run/%s FAILED 3rd run oom/%s FAILED 3rd run other\n" \
     "${#instances_running[@]}" \
     "${#instances_terminated[@]}" \
+    "${#indices_rerun_first[@]}" \
+    "${#indices_rerun_second[@]}" \
     "${#indices_deleted_first[@]}" \
     "${#indices_deleted_second[@]}" \
     "${#indices_deleted_third_oom[@]}" \
@@ -97,6 +113,37 @@ do
       gcloud compute instances start ${instance_terminated} \
         --project=isb-cgc-external-001 \
         --zone=us-central1-a
+    done
+  fi
+
+
+  if (( ${#indices_rerun_first[@]} != 0 ))
+  then
+    printf -- " recreating %s RERUN 1st run instances\n" \
+      "${#indices_rerun_first[@]}"
+    for index_rerun_first in "${indices_rerun_first[@]}"
+    do
+      bash gcloud/instances/run_instances.sh \
+        -i ${index_rerun_first} \
+        -s \
+        -f ${start_from} \
+        -t ${github_token} \
+        -u ${update_date_min}
+    done
+  fi
+
+  if (( ${#indices_rerun_second[@]} != 0 ))
+  then
+    printf -- " recreating %s RERUN 2nd run instances\n" \
+      "${#indices_rerun_second[@]}"
+    for index_rerun_second in "${indices_rerun_second[@]}"
+    do
+      bash gcloud/instances/run_instances.sh \
+        -i ${index_rerun_second} \
+        -s \
+        -f ${start_from} \
+        -t ${github_token} \
+        -u ${update_date_min}
     done
   fi
 

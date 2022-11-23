@@ -32,6 +32,7 @@ if [[ -f "${gcloud_log_vm}" ]]; then
   # this case, we try to restart the startup script and the snakemake pipeline from where it left off. Of note, if the
   # VM was stopped in the middle of a dependency installation, the code may simply fail and the VM will have to be
   # recreated.
+  preempted=true
 
   exec 3>&1 4>&2 >>${gcloud_log_vm} 2>&1
 
@@ -48,6 +49,7 @@ if [[ -f "${gcloud_log_vm}" ]]; then
 else
   # First startup of the VM, we install all tools and dependencies required for the pipeline before downloading the
   # pipeline and starting it.
+  preempted=false
 
   exec 3>&1 4>&2 >${gcloud_log_vm} 2>&1
 
@@ -258,10 +260,16 @@ sudo chown -R ${user} /home/${user}
 gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log &> /dev/null
 status_failed_first=$?
 
+gsutil ls gs://facets_tcga_results/logs/gcloud_rerun/startup_gcloud_vm_first_${batch_index}.log &> /dev/null
+status_rerun_first=$?
+
 # if the pipeline has already failed twice for this batch, reduce to only job at a time to
 # avert memory issues.
 gsutil ls gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log &> /dev/null
 status_failed_second=$?
+
+gsutil ls gs://facets_tcga_results/logs/gcloud_rerun/startup_gcloud_vm_second_${batch_index}.log &> /dev/null
+status_rerun_second=$?
 
 # if the pipeline has already failed three times for this batch due to memory usage, reduce to only job at a time to
 # avert memory issues.
@@ -352,25 +360,52 @@ if [[ ${status_failed_cur} != 0 ]]; then
   if [[ ${status_failed_first} != 0 ]] && [[ ${status_failed_second} != 0 ]] && [[ ${status_failed_third_oom} != 0 ]]; then
     # there is no failure log from a previous run of this batch
 
-    # log message
-    gcloud logging write ${gcloud_log_name} \
-      '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the first time."}' \
-      --payload-type=json \
-      --severity=WARNING
+    # if the failure is not due to a memory issue and if the VM was preempted, the most likely source of the error
+    # is the preemption itself. In this case, try to rerun as if it had not failed.
+    if [[ ${status_oom} != 0 ]] && [[ ${preempted} ]];  then
+      # log message
+      gcloud logging write ${gcloud_log_name} \
+        '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the first time (not oom & preempted)."}' \
+        --payload-type=json \
+        --severity=WARNING
 
-    gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
+      gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_rerun/startup_gcloud_vm_first_${batch_index}.log
+    else
+      # log message
+      gcloud logging write ${gcloud_log_name} \
+        '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the first time (oom | not preempted)."}' \
+        --payload-type=json \
+        --severity=WARNING
+
+      gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
+    fi
+
   elif [[ ${status_failed_first} == 0 ]]; then
     # there is a failure log after a first run of this batch
 
-    # log message
-    gcloud logging write ${gcloud_log_name} \
-      '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the second time."}' \
-      --payload-type=json \
-      --severity=WARNING
-
     # removing existing failed log and add new log
     gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
-    gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
+
+    # if the failure is not due to a memory issue and if the VM was preempted, the most likely source of the error
+    # is the preemption itself. In this case, try to rerun as if it had not failed.
+    if [[ ${status_oom} != 0 ]] && [[ ${preempted} ]];  then
+      # log message
+      gcloud logging write ${gcloud_log_name} \
+        '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the second time (not oom & preempted)."}' \
+        --payload-type=json \
+        --severity=WARNING
+
+      gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_rerun/startup_gcloud_vm_second_${batch_index}.log
+    else
+      # log message
+      gcloud logging write ${gcloud_log_name} \
+        '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline failed for the second time (oom | not preempted)."}' \
+        --payload-type=json \
+        --severity=WARNING
+
+      gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
+    fi
+
   elif [[ ${status_failed_second} == 0 ]]; then
     # there is a failure log after a second run of this batch
 
@@ -438,6 +473,16 @@ else
   elif [[ ${status_failed_third_oom} == 0 ]]; then
     # there is a failure log after a third run of this batch
     gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_third_oom_${batch_index}.log
+  fi
+
+  if [[ ${status_rerun_first} == 0 ]]; then
+    # there is a rerun log of first run of this batch
+    gsutil rm gs://facets_tcga_results/logs/gcloud_rerun/startup_gcloud_vm_first_${batch_index}.log
+  fi
+
+  if [[ ${status_rerun_second} == 0 ]]; then
+    # there is a rerun log of second run of this batch
+    gsutil rm gs://facets_tcga_results/logs/gcloud_rerun/startup_gcloud_vm_second_${batch_index}.log
   fi
 fi
 

@@ -60,7 +60,7 @@ do
     --logs_uri "gs://facets_tcga_results/logs/gcloud_failed" \
     --prefix "startup_gcloud_vm_second_" 2> >(grep -v "WARNING") && printf '\0' )
 
-  IFS=$'\n' read -r -d '' -a indices_deleted_third_oom < <( python -u gcloud/oomers/print_batch_indices.py \
+  IFS=$'\n' read -r -d '' -a indices_deleted_third_oom < <( python -u gcloud/others/print_batch_indices.py \
     --logs_uri "gs://facets_tcga_results/logs/gcloud_failed" \
     --prefix "startup_gcloud_vm_third_oom_" 2> >(grep -v "WARNING") && printf '\0' )
 

@@ -331,23 +331,24 @@ gcloud logging write ${gcloud_log_name} \
 snakemake -s workflow/Snakefile --profile ./profile --resources load=${load} --jobs ${jobs} -f --unlock
 snakemake -s workflow/Snakefile --profile ./profile --resources load=${load} --jobs ${jobs} -f --rerun-incomplete
 
-# log message
-gcloud logging write ${gcloud_log_name} \
-  '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "terminated pipeline."}' \
-  --payload-type=json \
-  --severity=INFO
-
 # last messages
 now_date="$(date +'%d/%m/%Y')"
 now_time="$(date +'%T')"
 printf "\nEnd date and time: %s %s\n" "$now_date" "$now_time"
 
-# before deleting, check that the log was uploaded to the results folder.
-# if not, upload it to the failed folder
+# before deleting, check if the pipeline ended successfully or not.
+# if not, upload the failed vm log it to the failed folder
+# otherwise, remove (if any) previous failed vm log
 gsutil ls gs://facets_tcga_results/logs/gcloud/startup_gcloud_vm_${batch_index}.log &> /dev/null
 status_failed_cur=$?
 
 if [[ ${status_failed_cur} != 0 ]]; then
+  # the pipeline was unsuccessful; upload failed log
+  gcloud logging write ${gcloud_log_name} \
+    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline ended with error."}' \
+    --payload-type=json \
+    --severity=INFO
+
   if [[ ${status_failed_first} != 0 ]] && [[ ${status_failed_second} != 0 ]] && [[ ${status_failed_third_oom} != 0 ]]; then
     # there is no failure log from a previous run of this batch
 
@@ -359,7 +360,7 @@ if [[ ${status_failed_cur} != 0 ]]; then
 
     gsutil cp ${gcloud_log_vm} gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
   elif [[ ${status_failed_first} == 0 ]]; then
-    # there was a failure log after a first run of this batch
+    # there is a failure log after a first run of this batch
 
     # log message
     gcloud logging write ${gcloud_log_name} \
@@ -421,6 +422,23 @@ if [[ ${status_failed_cur} != 0 ]]; then
       --bucket_gs_uri "gs://facets_tcga_results" \
       --start_from ${start_from}
   fi 
+else
+  # the pipeline was successful; delete failed log if any
+  gcloud logging write ${gcloud_log_name} \
+    '{"instance-id": "'${instance_id}'", "hostname": "'$(hostname)'", "message": "pipeline ended with success."}' \
+    --payload-type=json \
+    --severity=INFO
+
+  if [[ ${status_failed_first} == 0 ]]; then
+    # there is a failure log after a first run of this batch
+    gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_first_${batch_index}.log
+  elif [[ ${status_failed_second} == 0 ]]; then
+    # there is a failure log after a second run of this batch
+    gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_second_${batch_index}.log
+  elif [[ ${status_failed_third_oom} == 0 ]]; then
+    # there is a failure log after a third run of this batch
+    gsutil rm gs://facets_tcga_results/logs/gcloud_failed/startup_gcloud_vm_third_oom_${batch_index}.log
+  fi
 fi
 
 # delete instance

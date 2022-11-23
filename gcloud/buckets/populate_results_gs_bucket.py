@@ -60,8 +60,8 @@ def main(args):
                                     pair = "%s_vs_%s" % (args.tsample, args.nsample)
                                     pair_files = [x for x in os.listdir(folder_vm) if x.startswith(pair)]
                                     for pair_file in pair_files:
-                                        pair_file_vm = os.path.join(folder_vm, x)
-                                        pair_file_gs = os.path.join(folder_gs, x)
+                                        pair_file_vm = os.path.join(folder_vm, pair_file)
+                                        pair_file_gs = os.path.join(folder_gs, pair_file)
                                         cmd = "gsutil cp %s %s" % (pair_file_vm, pair_file_gs)
                                         cmds.append(cmd)
 

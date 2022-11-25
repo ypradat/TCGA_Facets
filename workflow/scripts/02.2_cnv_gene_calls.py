@@ -67,6 +67,9 @@ def main(args):
     # load table and genes
     df_tab = read_table(args.input_tab)
 
+    # remove aberrant segments
+    df_tab = df_tab.loc[df_tab["start"] < df_tab["end"]].copy()
+
     # make bed from tab
     cols_bed = ["chrom", "start", "end", "tcn.em", "lcn.em", "svtype", "svlen", "copy_number", "copy_number_more"] + \
             ["Tumor_Sample_Barcode", "Matched_Norm_Sample_Barcode"]

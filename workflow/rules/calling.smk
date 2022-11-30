@@ -147,7 +147,8 @@ rule somatic_cnv_process_vcf:
         "../envs/r.yaml"
     threads: 1
     params:
-        gender = lambda w: get_column_table_sample(w, "Gender")
+        gender = lambda w: get_column_table_sample(w, "Gender"),
+        threshold=config["params"]["cnv"]["calls_threshold"]
     resources:
         queue="shortq",
         mem_mb=8000,
@@ -159,6 +160,7 @@ rule somatic_cnv_process_vcf:
             --gender {params.gender} \
             --rules_arm {input.rules_arm} \
             --rules_cat {input.rules_cat} \
+            --threshold {params.threshold} \
             --output_arm {output.arm} \
             --output_sum {output.sum} \
             --output_tab {output.tab} \

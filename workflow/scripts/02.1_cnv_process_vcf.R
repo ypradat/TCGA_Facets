@@ -1,5 +1,5 @@
 # created: Oct 03 2022
-# modified: Nov 06 2022
+# modified: Nov 30 2022
 # author: Yoann Pradat
 # 
 #     CentraleSupelec
@@ -110,9 +110,15 @@ extract_genome_sizes <- function(header){
   genome <- data.frame(chrom=chroms, size=sizes)
   genome <- genome %>% mutate(chrom=gsub("^chr", "", chrom))
 
+  # apply same renaming as done by cnv_facets to have only numeric chromosome names
+  mask_x <- genome$chrom == "X"
+  if (sum(mask_x)>0)  genome[mask_x, "chrom"] <- "23"
+  mask_y <- genome$chrom == "Y"
+  if (sum(mask_y)>0)  genome[mask_y, "chrom"] <- "24"
+
   genome$size <- as.numeric(genome$size)
-  mask_char <- genome$chrom %in% as.character(1:22)
-  genome[mask_char, "chrom"] <- as.numeric(genome[mask_char, "chrom"])
+  genome <- genome %>% filter(chrom %in% as.character(1:24))
+  genome["chrom"] <- as.numeric(genome[["chrom"]])
 
   genome
 }
@@ -297,10 +303,11 @@ calculate_lst_custom <-  function(segs,
   list(lst = sum(lst))
 }
 
-calculate_genome_fractions <- function(df_cnv_tab, genome){
+
+calculate_genome_fractions <- function(df_cnv_tab, genome, threshold){
   # filter to consider only autosomes
-  df_cnv_tab <- df_cnv_tab %>% filter(chrom %in% 1:22)
-  genome <- genome %>% filter(chrom %in% 1:22)
+  df_cnv_tab <- df_cnv_tab %>% filter(chrom %in% c(1:23))
+  genome <- genome %>% filter(chrom %in% c(1:23))
   genome_length <- sum(genome$size)
 
   # total fraction of the genome covered by losses of any level
@@ -310,10 +317,13 @@ calculate_genome_fractions <- function(df_cnv_tab, genome){
   gain_total <- sum(df_cnv_tab %>% filter(copy_number_more %in% cnm_gain) %>% pull(svlen)) / genome_length
 
   # total fraction of the genome covered by different levels of losses and gains
-  loss_del <- sum(df_cnv_tab %>% filter(copy_number_more %in% c("hom_del")) %>% pull(svlen)) / genome_length
+  loss_del <- sum(df_cnv_tab %>% filter(copy_number_more %in% c("hom_del"), svlen < threshold*1e6) %>%
+                  pull(svlen)) / genome_length
   loss_loh_cnloh <- sum(df_cnv_tab %>% filter(copy_number_more %in% c("LOH", "cnLOH")) %>% pull(svlen)) / genome_length
-  gain_hl <- sum(df_cnv_tab %>% filter(copy_number_more %in% c("HL_gain")) %>% pull(svlen)) / genome_length
-  gain_ll_ml <- sum(df_cnv_tab %>% filter(copy_number_more %in% c("ML_gain", "LL_gain")) %>% pull(svlen)) / genome_length
+  gain_hl <- sum(df_cnv_tab %>% filter(copy_number_more %in% c("HL_gain"), svlen < threshold*1e6) %>%
+                 pull(svlen)) / genome_length
+  gain_ll_ml <- sum(df_cnv_tab %>% filter(copy_number_more %in% c("ML_gain", "LL_gain")) %>%
+                    pull(svlen)) / genome_length
 
   list(LOSS=loss_total,
        `LOSS:Deletion`=loss_del,
@@ -403,9 +413,9 @@ main <- function(args){
   }
 
   # undo renaming by cnv_facets to have only numeric chromosome names
-  mask_x <- df_cnv_tab$chrom == 'X'
+  mask_x <- df_cnv_tab$chrom == "X"
   if (sum(mask_x)>0)  df_cnv_tab[mask_x, "chrom"] <- "23"
-  mask_y <- df_cnv_tab$chrom == 'Y'
+  mask_y <- df_cnv_tab$chrom == "Y"
   if (sum(mask_y)>0)  df_cnv_tab[mask_y, "chrom"] <- "24"
   df_cnv_tab$chrom <- as.numeric(df_cnv_tab$chrom)
 
@@ -471,7 +481,7 @@ main <- function(args){
   # add X_Male status
   df_cnv_tab <- df_cnv_tab %>% mutate(X_Male=0)
   mask_male <- tolower(df_cnv_tab$Gender)=="male"
-  mask_xchr <- df_cnv_tab$chrom %in% c("23")
+  mask_xchr <- df_cnv_tab$chrom %in% c(23)
   df_cnv_tab[mask_male & mask_xchr, "X_Male"] <- 1
 
   # load rules
@@ -528,7 +538,7 @@ main <- function(args){
   df_cnv_tab <- df_cnv_tab %>% select(-WGD, -Ploidy, -TCN_Key, -LCN_Key, -Gender, -X_Male)
 
   # compute in-house CNA scores ========================================================================================
-  out_genome_fractions <- calculate_genome_fractions(df_cnv_tab, genome)
+  out_genome_fractions <- calculate_genome_fractions(df_cnv_tab, genome, args$threshold)
 
   # build table of summary statistics
   df_cna_sum <- data.frame(Tumor_Sample_Barcode=tumor_sample,
@@ -646,6 +656,8 @@ if (getOption('run.main', default=TRUE)) {
   parser$add_argument("--gender", type="character", help="'Gender of the sample. Either 'Male' or 'Female'.")
   parser$add_argument("--rules_cat", type="character", help="Path to table of rules for calling SCNA categories.")
   parser$add_argument("--rules_arm", type="character", help="Path to table of rules for calling chromosome arm events.")
+  parser$add_argument('--threshold', type="integer",
+                      help='CNV events from segments larger than x Mb are not considered for focal event metrics.')
   parser$add_argument("--output_arm", type="character", help="Path to output table of chromosome arm SCNAs.")
   parser$add_argument("--output_sum", type="character", help="Path to output table of SCNA summary statistics.")
   parser$add_argument("--output_tab", type="character", help="Path to output table of categorized SCNAs.")

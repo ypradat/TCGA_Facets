@@ -68,7 +68,7 @@ def get_input_snp_pileup(w):
     inputs.append(config["params"]["gatk"]["known_sites"])
     if config["start_from"] in ["download_bam", "get_snp_pileup"]:
         inputs.append("%s/mapping/download_bam_{tsample}.done" % L_FOLDER)
-        inputs.append(download_nbam="%s/mapping/download_bam_{nsample}.done" % L_FOLDER)
+        inputs.append("%s/mapping/download_bam_{nsample}.done" % L_FOLDER)
     return inputs
 
 def get_input_aggregate(w, typ, db):

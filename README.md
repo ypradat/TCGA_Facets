@@ -150,25 +150,18 @@ job                                count    min threads    max threads
 -------------------------------  -------  -------------  -------------
 all                                    1              1              1
 download_bam                           4              1              1
-get_snp_pileup                         4              4              4
+get_snp_pileup                         2              8              8
 remove_bams                            1              1              1
-setup_main                             1              1              1
-setup_r                                1              1              1
-somatic_cna_civic                      4              1              1
-somatic_cna_civic_filter               4              1              1
-somatic_cna_civic_preprocess           4              1              1
-somatic_cna_oncokb                     4              1              1
-somatic_cna_oncokb_filter              4              1              1
-somatic_cna_oncokb_preprocess          4              1              1
-somatic_cnv_bed                        4              1              1
-somatic_cnv_calls                      4              1              1
-somatic_cnv_chr_arm_sum                4              1              1
-somatic_cnv_facets_tumor_normal        4              1              1
-somatic_cnv_table                      4              1              1
-upload_results                         1              2              2
-total                                 57              1              4
+somatic_cna_civic                      2              1              1
+somatic_cna_oncokb                     2              1              1
+somatic_cnv_facets_tumor_normal        2              1              1
+somatic_cnv_gene_calls                 2              1              1
+somatic_cnv_gene_calls_filtered        2              1              1
+somatic_cnv_process_vcf                2              1              1
+upload_pair_results                    2              1              1
+upload_vm_log                          1              1              1
+total                                 23              1              8
 
-This was a dry-run (flag -n). The order of jobs does not reflect the order of execution.
 ```
 
 # Google compute engine

@@ -209,4 +209,4 @@ and run the bash scripts above from within this instance.
 ## References
 
 [R. Shen, V.E. Seshan. FACETS: allele-specific copy number and clonal heterogeneity analysis tool for high-throughput DNA
-sequencing Nucleic Acids Res., 44 (2016), p. e131.]<https://academic.oup.com/nar/article/44/16/e131/2460163>
+sequencing Nucleic Acids Res., 44 (2016), p. e131](https://academic.oup.com/nar/article/44/16/e131/2460163)

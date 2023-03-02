@@ -2,7 +2,12 @@
 
 <img src="img/overview.png" align="right" />
 
-## Organisation
+This repository contains the code that was developed to run FACETS tool on all TCGA whole-exome sequencing files
+(>22,000 files). The pipeline is organized via [snakemake](https://snakemake.readthedocs.io/en/stable/) and the
+execution was performed via the Google Cloud Engine with technical and financial support from [ISB-CGC cloud
+service](https://isb-cgc.appspot.com/).
+
+## Pipeline organisation
 
 The workflow of the analysis is divided in rules that are assembled in the snakemake subfiles of `workflow/rules` which
 are themselves included in the global snakemake file `workflow/Snakefile`. The rules call scripts located in the
@@ -13,7 +18,7 @@ analysis are installed during the first steps of the pipeline through [conda vir
 environments](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) whose specifications
 are given in the folder `workflow/envs`.
 
-## How to run the analysis?
+## How to run the pipeline?
 
 ### System requirements
 

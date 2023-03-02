@@ -1,4 +1,8 @@
-# Organisation
+# Large-scale execution of FACETS allele-specific copy-number analysis tool
+
+<img src="img/overview.png" align="right" />
+
+## Organisation
 
 The workflow of the analysis is divided in rules that are assembled in the snakemake subfiles of `workflow/rules` which
 are themselves included in the global snakemake file `workflow/Snakefile`. The rules call scripts located in the
@@ -9,9 +13,9 @@ analysis are installed during the first steps of the pipeline through [conda vir
 environments](https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html) whose specifications
 are given in the folder `workflow/envs`.
 
-# How to run the analysis?
+## How to run the analysis?
 
-## System requirements
+### System requirements
 
 In order to run the analysis, ensure the `snakemake` and `conda` commands are available (if you are on a HPC using
 slurm, you may use `module load` to load [modules](https://curc.readthedocs.io/en/latest/compute/modules.html) providing
@@ -26,9 +30,9 @@ conda env create -f workflow/envs/snakemake.yaml
 If you are running the pipeline via Google Compute Engine VM instances, all the dependencies and conda environments are
 automatically installed.
 
-## Data requirements
+### Data requirements
 
-### config
+#### config
 
 For this whole-exome sequencing data analysis pipeline, you must provide 2 files in the `config` folder, namely
 
@@ -62,7 +66,7 @@ at
 
 * `workflow/scripts/prepare_samples.py`
 
-###  external
+####  external
 
 There are some tools that are only available upon request or on public github repositories and therefore are not
 installed automatically through the conda environment. Most of the tools are installed automatically during the pipeline
@@ -76,7 +80,7 @@ subfolders after the pipeline is finished.
 + `CivicAnnotator`
 + `oncokb-annotator`
 
-### resources
+#### resources
 
 For running with the provided `config.yaml` file, you must have a `resources` folder at the root of this repository with
 at least the following subfolders.  It is not mandatory to have the same structure, or the same files. Update the file
@@ -107,7 +111,7 @@ at least the following subfolders.  It is not mandatory to have the same structu
   * OncoKB_Curation_And_Rules.xlsx. Available upon request to authors.
 
 
-## The snakemake command
+### The snakemake command
 
 You can launch the full pipeline via
 
@@ -126,14 +130,14 @@ so with
 snakemake -s workflow/Snakefile --jobs [n_jobs] --profile [your_profile] [path/to/file/you/want/to/reproduce]
 ```
 
-# Workflow graph
+## Workflow graph
 
 Here is the graph of the workflow
 
 <img src="rulegraph.svg" />
 
 
-# Dry-run example on 2 pairs tumor/normal
+## Dry-run example on 2 pairs tumor/normal
 
 The command ran is
 
@@ -164,7 +168,7 @@ total                                 23              1              8
 
 ```
 
-# Google compute engine
+## Google compute engine
 
 All the scripts that allow interacting with the Google Compute Engine environment are located in the `glcoud` folder. In
 order to execute the pipeline for all batches defined in the data files `config/samples.all.tsv` and
@@ -201,3 +205,8 @@ bash gcloud/instances/run_main_instance.sh
 ```
 
 and run the bash scripts above from within this instance.
+
+## References
+
+[R. Shen, V.E. Seshan. FACETS: allele-specific copy number and clonal heterogeneity analysis tool for high-throughput DNA
+sequencing Nucleic Acids Res., 44 (2016), p. e131.]<https://academic.oup.com/nar/article/44/16/e131/2460163>
